@@ -1,15 +1,12 @@
 #include "Coroutines.h"
 #include "Arduino.h"
 
-Coroutine::Coroutine() :
-	jumpLocation(NULL)
+Coroutine::Coroutine()
 {
 }
 
 Coroutine::~Coroutine()
 {
-	if (jumpLocation != NULL)
-		free(jumpLocation);
 }
 
 bool Coroutine::update(unsigned long millis)
@@ -22,8 +19,7 @@ bool Coroutine::update(unsigned long millis)
 	if (barrierTime <= millis)
 	{
 		sinceStarted = millis - startedAt;
-		//if (!setjmp(returnLocation))
-			return function(*this);
+		return function(*this);
 	}
 
 	return false;
@@ -33,13 +29,9 @@ void Coroutine::reset()
 {
 	barrierTime = 0;
 	sinceStarted = 0;
+	jumpLocation = 0;
 	terminated = suspended = false;
 	function = NULL;
-	if (jumpLocation != NULL)
-	{
-		free(jumpLocation);
-		jumpLocation = NULL;
-	}
 }
 
 void Coroutine::wait(unsigned long time)

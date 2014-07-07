@@ -2,33 +2,23 @@
 #define COROUTINES_H
 
 #include "Arduino.h"
-#include <setjmp.h>
 #include <assert.h>
 
 // --
 
-#define BEGIN_COROUTINE(functionName)				\
-	bool functionName(Coroutine& coroutine)			\
-	{												\
-		if (coroutine.jumpLocation != NULL)			\
-			longjmp(*coroutine.jumpLocation, 1);	\
+#define BEGIN_COROUTINE					\
+	switch (coroutine.jumpLocation)		\
+	{									\
+	case 0:										
 
-#define COROUTINE_YIELD													\
-		if (coroutine.jumpLocation != NULL)								\
-			free(coroutine.jumpLocation);								\
-		coroutine.jumpLocation = (jmp_buf*) malloc(sizeof(jmp_buf));	\
-		if (!setjmp(*coroutine.jumpLocation))							\
-			return false;
-		//	longjmp(coroutine.returnLocation, 1);
+#define COROUTINE_YIELD					\
+	coroutine.jumpLocation = __LINE__;	\
+	return false;						\
+	case __LINE__:
 
-#define END_COROUTINE								\
-		if (coroutine.jumpLocation != NULL)			\
-		{											\
-			free(coroutine.jumpLocation);			\
-			coroutine.jumpLocation = NULL;			\
-		}											\
-		return true;								\
-	}
+#define END_COROUTINE					\
+	}									\
+	return true;							
 
 // --
 
@@ -47,8 +37,7 @@ public:
 	//void* barrierComparedValue;
 	size_t comparedSize;
 	bool terminated, suspended;
-	jmp_buf* jumpLocation;
-	//jmp_buf returnLocation;
+	int jumpLocation;
 
 	Coroutine();
 	~Coroutine();

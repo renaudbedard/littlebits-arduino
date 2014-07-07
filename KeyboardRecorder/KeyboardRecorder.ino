@@ -32,12 +32,13 @@ void setup()
 }
 
 //int noteIndex;
-BEGIN_COROUTINE(play);
+bool play(Coroutine& coroutine)	
 {
+	BEGIN_COROUTINE;
+
 	Serial.println("Starting to play!");
 
 	// linear
-/*
 	Serial.println("Playing note 0");
 	analogWrite(Out::Analog::Oscillator, notes[0]);
 
@@ -55,20 +56,6 @@ BEGIN_COROUTINE(play);
 
 	coroutine.wait(500);
 	COROUTINE_YIELD;
-*/
-
-	// stack-alloc
-/*
-	for (int i=0; i<recordedNotes; i++)
-	{
-		Serial.print("Playing note");
-		Serial.println(i);
-		analogWrite(Out::Analog::Oscillator, notes[i]);
-
-		coroutine.wait(1000);
-		COROUTINE_YIELD;
-	}
-*/
 
 	// .data-alloc
 /*
@@ -78,15 +65,16 @@ BEGIN_COROUTINE(play);
 		Serial.println(noteIndex);
 		analogWrite(Out::Analog::Oscillator, notes[noteIndex]);
 
-		coroutine.wait(1000);
+		coroutine.wait(500);
 		COROUTINE_YIELD;
 	}
 */
 
 	playMode = Stopped;
 	Serial.println("All done!");
+
+	END_COROUTINE;
 }
-END_COROUTINE;
 
 void loop() 
 {
