@@ -48,10 +48,10 @@ extern "C" void __cxa_pure_virtual() {;}
 
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino\arduino.h"
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\variants\leonardo\pins_arduino.h" 
-#include "C:\Users\Renaud\Documents\Arduino\KeyboardRecorder\KeyboardRecorder.ino"
-#include "C:\Users\Renaud\Documents\Arduino\KeyboardRecorder\Coroutines.cpp"
-#include "C:\Users\Renaud\Documents\Arduino\KeyboardRecorder\Coroutines.h"
-#include "C:\Users\Renaud\Documents\Arduino\KeyboardRecorder\Pins.h"
-#include "C:\Users\Renaud\Documents\Arduino\KeyboardRecorder\Util.cpp"
-#include "C:\Users\Renaud\Documents\Arduino\KeyboardRecorder\Util.h"
+#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\KeyboardRecorder.ino"
+#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Coroutines.cpp"
+#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Coroutines.h"
+#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Pins.h"
+#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Util.cpp"
+#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Util.h"
 #endif

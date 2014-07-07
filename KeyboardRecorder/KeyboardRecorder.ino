@@ -17,9 +17,10 @@ enum PlayMode {
 const int MaxRecordedNotes = 32;
 
 int notes[MaxRecordedNotes];
-int recordedNotes = 0;
+int recordedNotes = 5;
 Mode mode = None;
 PlayMode playMode = Stopped;
+bool buttonLastPressed;
 
 Coroutine* playCoroutine = NULL;
 Coroutines<1> coroutines;
@@ -30,18 +31,59 @@ void setup()
     analogWrite(Out::Analog::Oscillator, 0);
 }
 
+//int noteIndex;
 BEGIN_COROUTINE(play);
 {
 	Serial.println("Starting to play!");
 
+	// linear
+/*
+	Serial.println("Playing note 0");
+	analogWrite(Out::Analog::Oscillator, notes[0]);
+
+	coroutine.wait(1000);
+	COROUTINE_YIELD;
+
+	Serial.println("Playing note 1");
+	analogWrite(Out::Analog::Oscillator, notes[1]);
+
+	coroutine.wait(1500);
+	COROUTINE_YIELD;
+
+	Serial.println("Playing note 2");
+	analogWrite(Out::Analog::Oscillator, notes[2]);
+
+	coroutine.wait(500);
+	COROUTINE_YIELD;
+*/
+
+	// stack-alloc
+/*
 	for (int i=0; i<recordedNotes; i++)
 	{
+		Serial.print("Playing note");
+		Serial.println(i);
 		analogWrite(Out::Analog::Oscillator, notes[i]);
 
 		coroutine.wait(1000);
 		COROUTINE_YIELD;
 	}
-	
+*/
+
+	// .data-alloc
+/*
+	for (noteIndex=0; noteIndex<recordedNotes; noteIndex++)
+	{
+		Serial.print("Playing note");
+		Serial.println(noteIndex);
+		analogWrite(Out::Analog::Oscillator, notes[noteIndex]);
+
+		coroutine.wait(1000);
+		COROUTINE_YIELD;
+	}
+*/
+
+	playMode = Stopped;
 	Serial.println("All done!");
 }
 END_COROUTINE;
@@ -63,13 +105,15 @@ void loop()
 	if (mode == Playback)
 	{
 		bool buttonPressed = digitalRead(In::Digital::PlayPause) == HIGH;
+		bool buttonNewlyPressed = !buttonLastPressed && buttonPressed;
+		buttonLastPressed = buttonPressed;
 
-		PlayMode lastPlayMode = playMode;
-		switch (lastPlayMode)
+		if (buttonNewlyPressed)
 		{
-		case Stopped:
-			if (buttonPressed)
+			PlayMode lastPlayMode = playMode;
+			switch (lastPlayMode)
 			{
+			case Stopped:
 				if (recordedNotes == 0)
 					Serial.println("Nothing to play!");
 				else
@@ -77,26 +121,26 @@ void loop()
 					playMode = Playing;
 					playCoroutine = &coroutines.add(play);
 				}
-			}
-			break;
+				break;
 
-		case Playing:
-			if (buttonPressed)
-			{
+			case Playing:
 				playMode = Paused;
 				if (!playCoroutine->terminated)
+				{
+					Serial.println("Paused");
 					playCoroutine->suspend();
-			}
-			break;
+				}
+				break;
 
-		case Paused:
-			if (buttonPressed)
-			{
+			case Paused:
 				playMode = Playing;
 				if (!playCoroutine->terminated)
+				{
+					Serial.println("Unpaused");
 					playCoroutine->resume();
+				}
+				break;
 			}
-			break;
 		}
 	}
 	else // if (mode == Record)

@@ -19,18 +19,19 @@ bool Coroutine::update(unsigned long millis)
 	if (suspended)
 		return false;
 
-	timeToWait = timeToWait > dt ? timeToWait - dt : 0;
-	sinceStarted += dt;
-
-	if (timeToWait == 0)
-		return function(*this);
+	if (barrierTime <= millis)
+	{
+		sinceStarted = millis - startedAt;
+		//if (!setjmp(returnLocation))
+			return function(*this);
+	}
 
 	return false;
 }
 
 void Coroutine::reset()
 {
-	timeToWait = 0;
+	barrierTime = 0;
 	sinceStarted = 0;
 	terminated = suspended = false;
 	function = NULL;
@@ -43,22 +44,29 @@ void Coroutine::reset()
 
 void Coroutine::wait(unsigned long time)
 {
-	timeToWait = millis();
+	barrierTime = millis() + time;
 }
 
 void Coroutine::terminate()
 {
 	terminated = true;
+	suspended = false;
 }
 
 void Coroutine::suspend()
 {
-	suspended = true;
-	suspendedAt = millis();
+	if (!suspended && !terminated)
+	{
+		suspended = true;
+		suspendedAt = millis();
+	}
 }
 
 void Coroutine::resume() 
 {
-	suspended = false;
-	startedAt += millis() - suspendedAt;
+	if (suspended && !terminated)
+	{
+		suspended = false;
+		startedAt += millis() - suspendedAt;
+	}
 }

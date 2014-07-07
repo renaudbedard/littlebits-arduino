@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #include <setjmp.h>
+#include <assert.h>
 
 // --
 
@@ -14,10 +15,11 @@
 
 #define COROUTINE_YIELD													\
 		if (coroutine.jumpLocation != NULL)								\
-		free(coroutine.jumpLocation);									\
+			free(coroutine.jumpLocation);								\
 		coroutine.jumpLocation = (jmp_buf*) malloc(sizeof(jmp_buf));	\
 		if (!setjmp(*coroutine.jumpLocation))							\
-			return false;		
+			return false;
+		//	longjmp(coroutine.returnLocation, 1);
 
 #define END_COROUTINE								\
 		if (coroutine.jumpLocation != NULL)			\
@@ -40,12 +42,13 @@ class Coroutine
 public:
 	// TODO : encapsulate better?
 	CoroutineBody function;
-	unsigned long timeToWait, sinceStarted, startedAt, suspendedAt;
+	unsigned long barrierTime, sinceStarted, startedAt, suspendedAt;
 	//void* barrierToCompare;
 	//void* barrierComparedValue;
 	size_t comparedSize;
 	bool terminated, suspended;
 	jmp_buf* jumpLocation;
+	//jmp_buf returnLocation;
 
 	Coroutine();
 	~Coroutine();
@@ -53,8 +56,9 @@ public:
 	void reset();
 	bool update(unsigned long millis);
 
-	template <typename T>
-	void waitFor(T* pointer, T equals);
+	//template <typename T>
+	//void waitFor(T* pointer, T equals);
+
 	void wait(unsigned long millis);
 	void terminate();
 	void suspend();
@@ -83,8 +87,8 @@ public:
 
 template <int N>
 Coroutines<N>::Coroutines() :
-	activeCount(0),
-	activeMask(0)
+	activeMask(0),
+	activeCount(0)
 {
 }
 
@@ -110,13 +114,12 @@ Coroutine& Coroutines<N>::add(CoroutineBody function)
 
 	// out of coroutines!
 	Serial.println("Out of allocated coroutines!");
+	assert(false);
 }
 
 template <int N>
 void Coroutines<N>::update(unsigned long millis)
 {
-	unsigned long dt = lastMillis - millis;
-
 	int bit = 0;
 	int removed = 0;
 	for (int i = 0; i < activeCount; i++)
@@ -125,7 +128,7 @@ void Coroutines<N>::update(unsigned long millis)
 			bit++;
 
 		Coroutine& coroutine = coroutines[bit];
-		bool result = coroutine.update(dt);
+		bool result = coroutine.update(millis);
 		if (result)
 		{
 			// remove coroutine
@@ -140,8 +143,6 @@ void Coroutines<N>::update(unsigned long millis)
 	}
 
 	activeCount -= removed;
-
-	lastMillis = millis;
 }
 
 template <int N>
@@ -150,9 +151,9 @@ void Coroutines<N>::update()
 	update(millis());
 }
 
-template <typename T>
-void Coroutine::waitFor(T* pointer, T equals)
-{
-}
+//template <typename T>
+//void Coroutine::waitFor(T* pointer, T equals)
+//{
+//}
 
 #endif
