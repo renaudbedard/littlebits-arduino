@@ -14,10 +14,10 @@ enum PlayMode {
 	Paused
 };
 
-const int MaxRecordedNotes = 32;
+const byte MaxRecordedNotes = 32;
 
 int notes[MaxRecordedNotes];
-int recordedNotes = 5;
+byte recordedNotes = 5;
 Mode mode = None;
 PlayMode playMode = Stopped;
 bool buttonLastPressed;
@@ -37,7 +37,7 @@ void setup()
 
 bool play(Coroutine& coroutine)
 {
-	COROUTINE_LOCAL(int, i);
+	COROUTINE_LOCAL(byte, i);
 	BEGIN_COROUTINE;
 
 	for (i=0; i<recordedNotes; i++)

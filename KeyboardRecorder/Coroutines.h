@@ -53,13 +53,13 @@ typedef bool (*CoroutineBody)(Coroutine&);
 class Coroutine
 {
 public:
-	const static int MaxLocals = 5;
+	const static byte MaxLocals = 5;
 
 	struct SavedLocal
 	{
 		const void* sourceData;
 		void* copiedData;
-		int length;
+		byte length;
 	};
 
 	CoroutineBody function;
@@ -70,10 +70,10 @@ public:
 	//size_t comparedSize;
 
 	bool terminated, suspended;
-	int jumpLocation;
+	byte jumpLocation;
 	SavedLocal savedLocals[MaxLocals];
-	int numSavedLocals;
-	int numRecoveredLocals;
+	byte numSavedLocals;
+	byte numRecoveredLocals;
 
 	Coroutine();
 	~Coroutine();
@@ -98,7 +98,7 @@ class Coroutines
 private:
 	Coroutine coroutines[N];
 	unsigned int activeMask;
-	int activeCount;
+	byte activeCount;
 
 public:
 	Coroutines();
