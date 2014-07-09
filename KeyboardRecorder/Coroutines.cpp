@@ -32,6 +32,10 @@ void Coroutine::reset()
 	jumpLocation = 0;
 	terminated = suspended = false;
 	function = NULL;
+	for (int i=0; i<numSavedLocals; i++)
+		free(savedLocals[i].copiedData);
+	numSavedLocals = 0;
+	numRecoveredLocals = 0;
 }
 
 void Coroutine::wait(unsigned long time)

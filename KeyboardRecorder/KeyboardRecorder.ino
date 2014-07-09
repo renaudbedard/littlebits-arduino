@@ -27,54 +27,37 @@ Coroutines<1> coroutines;
 
 void setup() 
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
     analogWrite(Out::Analog::Oscillator, 0);
 }
 
-//int noteIndex;
-bool play(Coroutine& coroutine)	
+// this avoids the (false postive) warning for coroutine locals
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
+bool play(Coroutine& coroutine)
 {
+	COROUTINE_LOCAL(int, i);
 	BEGIN_COROUTINE;
 
-	Serial.println("Starting to play!");
-
-	// linear
-	Serial.println("Playing note 0");
-	analogWrite(Out::Analog::Oscillator, notes[0]);
-
-	coroutine.wait(1000);
-	COROUTINE_YIELD;
-
-	Serial.println("Playing note 1");
-	analogWrite(Out::Analog::Oscillator, notes[1]);
-
-	coroutine.wait(1500);
-	COROUTINE_YIELD;
-
-	Serial.println("Playing note 2");
-	analogWrite(Out::Analog::Oscillator, notes[2]);
-
-	coroutine.wait(500);
-	COROUTINE_YIELD;
-
-	// .data-alloc
-/*
-	for (noteIndex=0; noteIndex<recordedNotes; noteIndex++)
+	for (i=0; i<recordedNotes; i++)
 	{
-		Serial.print("Playing note");
-		Serial.println(noteIndex);
-		analogWrite(Out::Analog::Oscillator, notes[noteIndex]);
+		Serial.print(F("Playing note "));
+		Serial.println(i);
+		analogWrite(Out::Analog::Oscillator, notes[i]);
 
 		coroutine.wait(500);
 		COROUTINE_YIELD;
 	}
-*/
 
 	playMode = Stopped;
-	Serial.println("All done!");
+	Serial.println(F("All done!"));
 
 	END_COROUTINE;
+	return true;
 }
+
+#pragma GCC diagnostic pop
 
 void loop() 
 {
@@ -86,7 +69,7 @@ void loop()
 
 	if (mode != lastMode)
 	{
-		Serial.println(mode == Playback ? "Playback mode" : "Record mode");
+		Serial.println(mode == Playback ? F("Playback mode") : F("Record mode"));
 		lastMode = mode;
 	}
 
@@ -103,7 +86,7 @@ void loop()
 			{
 			case Stopped:
 				if (recordedNotes == 0)
-					Serial.println("Nothing to play!");
+					Serial.println(F("Nothing to play!"));
 				else
 				{
 					playMode = Playing;
@@ -115,7 +98,7 @@ void loop()
 				playMode = Paused;
 				if (!playCoroutine->terminated)
 				{
-					Serial.println("Paused");
+					Serial.println(F("Paused"));
 					playCoroutine->suspend();
 				}
 				break;
@@ -124,7 +107,7 @@ void loop()
 				playMode = Playing;
 				if (!playCoroutine->terminated)
 				{
-					Serial.println("Unpaused");
+					Serial.println(F("Unpaused"));
 					playCoroutine->resume();
 				}
 				break;

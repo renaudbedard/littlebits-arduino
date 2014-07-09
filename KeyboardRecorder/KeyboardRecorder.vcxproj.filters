@@ -15,27 +15,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Pins.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <None Include="KeyboardRecorder.ino" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="Visual Micro\.KeyboardRecorder.vsarduino.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Coroutines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Pins.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="KeyboardRecorder.ino" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Util.cpp">
+    <ClCompile Include="Coroutines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Coroutines.cpp">
+    <ClCompile Include="Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

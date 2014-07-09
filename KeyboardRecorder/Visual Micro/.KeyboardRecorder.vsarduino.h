@@ -16,7 +16,7 @@
 #define USB_PID 0x8036
 #define USB_MANUFACTURER 
 #define USB_PRODUCT "\"Arduino Leonardo\""
-#define ARDUINO 156
+#define ARDUINO 157
 #define ARDUINO_MAIN
 #define __AVR__
 #define __avr__

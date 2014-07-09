@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2D4CD819-11BF-4718-94C5-3FEA30B5CE13}</ProjectGuid>
+    <ProjectGuid>{4E57B6A0-4BD7-4AC5-98E4-EDA0F93B4B3B}</ProjectGuid>
     <RootNamespace>KeyboardRecorder</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -41,10 +41,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;C:\Program Files (x86)\Arduino\hardware\arduino\avr\variants\leonardo;C:\Program Files (x86)\Arduino\libraries;C:\Program Files (x86)\Arduino\hardware\arduino\avr\libraries;C:\Program Files (x86)\Visual Micro\Visual Micro for Arduino\Micro Platforms\default\debuggers;C:\Users\Renaud\Documents\Arduino\libraries;c:\program files (x86)\arduino\hardware\tools\avr\avr\include\;c:\program files (x86)\arduino\hardware\tools\avr\avr\include\avr\;c:\program files (x86)\arduino\hardware\tools\avr\avr\;c:\program files (x86)\arduino\hardware\tools\avr\lib\gcc\avr\4.3.2\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>C:\Users\Renaud\Documents\Arduino\KeyboardRecorder\Visual Micro\.KeyboardRecorder.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;C:\Program Files (x86)\Arduino\hardware\arduino\avr\variants\leonardo;C:\Program Files (x86)\Arduino\libraries;C:\Program Files (x86)\Arduino\hardware\arduino\avr\libraries;C:\Program Files (x86)\Visual Micro\Visual Micro for Arduino\Micro Platforms\default\debuggers;C:\Users\Renaud\Documents\Arduino\libraries;C:\Program Files (x86)\MHV AVR Tools\avr\include;C:\Program Files (x86)\MHV AVR Tools\avr\include\avr;C:\Program Files (x86)\MHV AVR Tools\avr;C:\Program Files (x86)\MHV AVR Tools\lib\gcc\avr\4.8.2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Visual Micro\.KeyboardRecorder.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
-      <PreprocessorDefinitions>__AVR_ATmega32u4__;__AVR_ATmega32U4__;USB_VID=0x2341;USB_PID=0x8036;USB_MANUFACTURER=;USB_PRODUCT="Arduino Leonardo";ARDUINO=156;ARDUINO_MAIN;__AVR__;__avr__;F_CPU=16000000L;__cplusplus;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__AVR_ATmega32u4__;__AVR_ATmega32U4__;USB_VID=0x2341;USB_PID=0x8036;USB_MANUFACTURER=;USB_PRODUCT="Arduino Leonardo";ARDUINO=157;ARDUINO_MAIN;__AVR__;__avr__;F_CPU=16000000L;__cplusplus;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -56,7 +56,6 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;C:\Program Files (x86)\Arduino\hardware\arduino\avr\variants\leonardo;C:\Program Files (x86)\Arduino\libraries;C:\Program Files (x86)\Arduino\hardware\arduino\avr\libraries;C:\Program Files (x86)\Visual Micro\Visual Micro for Arduino\Micro Platforms\default\debuggers;C:\Users\Renaud\Documents\Arduino\libraries;c:\program files (x86)\arduino\hardware\tools\avr\avr\include\;c:\program files (x86)\arduino\hardware\tools\avr\avr\include\avr\;c:\program files (x86)\arduino\hardware\tools\avr\avr\;c:\program files (x86)\arduino\hardware\tools\avr\lib\gcc\avr\4.3.2\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -65,15 +64,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Coroutines.h" />
-    <ClInclude Include="Pins.h" />
-    <ClInclude Include="Util.h" />
-    <ClInclude Include="Visual Micro\.KeyboardRecorder.vsarduino.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="KeyboardRecorder.ino">
       <FileType>CppCode</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Coroutines.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="Pins.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="Visual Micro\.KeyboardRecorder.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Coroutines.cpp" />
@@ -82,9 +87,4 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <ProjectExtensions>
-    <VisualStudio>
-      <UserProperties arduino.upload.port="COM6" />
-    </VisualStudio>
-  </ProjectExtensions>
 </Project>
