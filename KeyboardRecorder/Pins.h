@@ -1,3 +1,5 @@
+#include "Arduino.h"
+
 #ifndef PINS_H
 #define PINS_H
 
@@ -7,13 +9,13 @@ class In
     class Digital
     {
     public:
-        static const int PlayPause = 0;
+        static const byte PlayPause = 0;
     };
     class Analog
     {
     public:
-        static const int Keyboard = 0;
-        static const int ModeSwitch = 1;
+        static const byte Keyboard = 0;
+        static const byte ModeSwitch = 1;
     };
 };
 
@@ -23,13 +25,13 @@ class Out
     class Digital
     {
     public:
-        static const int Unused = 1;
+        static const byte Unused = 1;
     };
     class Analog
     {
     public:
-        static const int Oscillator = 5;
-        static const int Unused = 9;        
+        static const byte Oscillator = 5;
+        static const byte Unused = 9;        
     };  
 };
 

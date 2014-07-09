@@ -17,10 +17,12 @@ enum PlayMode {
 const byte MaxRecordedNotes = 32;
 
 int notes[MaxRecordedNotes];
-byte recordedNotes = 5;
+byte recordedNotes;
 Mode mode = None;
 PlayMode playMode = Stopped;
 bool buttonLastPressed;
+int keyLastPressed;
+bool keyReleased;
 
 Coroutine* playCoroutine = NULL;
 Coroutines<1> coroutines;
@@ -46,12 +48,13 @@ bool play(Coroutine& coroutine)
 		Serial.println(i);
 		analogWrite(Out::Analog::Oscillator, notes[i]);
 
-		coroutine.wait(500);
+		coroutine.wait(100);
 		COROUTINE_YIELD;
 	}
 
 	playMode = Stopped;
 	Serial.println(F("All done!"));
+	analogWrite(Out::Analog::Oscillator, 0);
 
 	END_COROUTINE;
 	return true;
@@ -65,7 +68,7 @@ void loop()
 	coroutines.update(time);
 
 	Mode lastMode = mode;
-	mode = digitalAnalogRead(In::Analog::ModeSwitch) ? Playback : Record;
+	mode = boolAnalogRead(In::Analog::ModeSwitch) ? Playback : Record;
 
 	if (mode != lastMode)
 	{
@@ -116,6 +119,24 @@ void loop()
 	}
 	else // if (mode == Record)
 	{
+		int keyboardValue = analogRead(In::Analog::Keyboard);
+		if (keyboardValue != 0)
+		{
+			if (keyReleased && keyLastPressed == keyboardValue)
+			{
+				Serial.print(F("Recorded "));
+				Serial.println(keyboardValue);
+				notes[recordedNotes++] = keyboardValue;
+
+				keyReleased = false;
+			}
+			keyLastPressed = keyboardValue;
+		}
+		else
+		{
+			keyReleased = true;
+			keyLastPressed = 0;
+		}
 	}
 }
 
