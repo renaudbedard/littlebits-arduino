@@ -2,47 +2,47 @@
 #define COROUTINES_H
 
 #include "Arduino.h"
-#include <assert.h>
+#include "Util.h"
 
-#define BEGIN_COROUTINE					\
-	switch (coroutine.jumpLocation)		\
-	{									\
+#define BEGIN_COROUTINE										\
+	trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),	\
+		  coroutine.id, __func__, coroutine.sinceStarted);	\
+	switch (coroutine.jumpLocation)							\
+	{														\
 	case 0:										
 
-#define COROUTINE_LOCAL(type, name)																\
-	type name;																					\
-	if (coroutine.jumpLocation == 0)															\
-	{																							\
-		if (coroutine.numSavedLocals >= Coroutine::MaxLocals)									\
-		{																						\
-			Serial.println(F("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));	\
-			assert(false);																		\
-		}																						\
-		Coroutine::SavedLocal& local = coroutine.savedLocals[coroutine.numSavedLocals++];		\
-		local.sourceData = &name;																\
-		local.copiedData = malloc(sizeof(type));												\
-		local.length = sizeof(type);															\
-	}																							\
-	else																						\
-	{																							\
-		Coroutine::SavedLocal& local = coroutine.savedLocals[coroutine.numRecoveredLocals++];	\
-		memcpy(&name, local.copiedData, local.length);											\
-	}
+#define COROUTINE_LOCAL(type, name)														\
+		byte COROUTINE_localIndex = 0;													\
+		if (coroutine.jumpLocation == 0 && !coroutine.looping)							\
+		{																				\
+			assert(coroutine.numSavedLocals >= Coroutine::MaxLocals,					\
+				   P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));	\
+			trace(P("Allocating local '" #name "' (#%hhu)"), coroutine.numSavedLocals);	\
+			COROUTINE_localIndex = coroutine.numSavedLocals;							\
+			coroutine.savedLocals[coroutine.numSavedLocals++] = malloc(sizeof(type));	\
+		}																				\
+		else																			\
+			COROUTINE_localIndex = coroutine.numRecoveredLocals++;						\
+		type& name = *((type*) coroutine.savedLocals[COROUTINE_localIndex]);
 
-#define COROUTINE_YIELD																\
-	coroutine.jumpLocation = __LINE__;												\
-	for (int COROUTINE_i=0; COROUTINE_i<coroutine.numSavedLocals; COROUTINE_i++)	\
-	{																				\
-		Coroutine::SavedLocal& local = coroutine.savedLocals[COROUTINE_i];			\
-		memcpy(local.copiedData, local.sourceData, local.length);					\
-	}																				\
-	coroutine.numRecoveredLocals = 0;												\
-	return false;																	\
-	case __LINE__:						
+#define COROUTINE_YIELD						\
+		coroutine.jumpLocation = __LINE__;	\
+		coroutine.numRecoveredLocals = 0;	\
+		trace(P("...yielding..."));			\
+		return false;						\
+	case __LINE__:	
 
-#define END_COROUTINE	\
-	}									
+#define COROUTINE_FINALLY		\
+	case -1:					\
+		if (coroutine.looping)	\
+			break;				
 
+#define END_COROUTINE			\
+	default:					\
+		_NOP();					\
+	}							\
+	return !coroutine.looping;	
+	
 // --
 
 class Coroutine;
@@ -53,14 +53,7 @@ typedef bool (*CoroutineBody)(Coroutine&);
 class Coroutine
 {
 public:
-	const static byte MaxLocals = 5;
-
-	struct SavedLocal
-	{
-		const void* sourceData;
-		void* copiedData;
-		byte length;
-	};
+	const static byte MaxLocals = 8;
 
 	CoroutineBody function;
 	unsigned long barrierTime, sinceStarted, startedAt, suspendedAt;
@@ -69,11 +62,11 @@ public:
 	//void* barrierComparedValue;
 	//size_t comparedSize;
 
-	bool terminated, suspended;
-	byte jumpLocation;
-	SavedLocal savedLocals[MaxLocals];
-	byte numSavedLocals;
-	byte numRecoveredLocals;
+	byte id;
+	bool terminated, suspended, looping;
+	long jumpLocation;
+	void* savedLocals[MaxLocals];
+	byte numSavedLocals, numRecoveredLocals;
 
 	Coroutine();
 	~Coroutine();
@@ -88,11 +81,12 @@ public:
 	void terminate();
 	void suspend();
 	void resume();
+	void loop();
 };
 
 // --
 
-template <int N>
+template <byte N>
 class Coroutines
 {
 private:
@@ -103,32 +97,33 @@ private:
 public:
 	Coroutines();
 
-	Coroutine& add(CoroutineBody function);
+	Coroutine& start(CoroutineBody function);
 	void update(unsigned long millis);
 	void update();
 };
 
 // --
 
-template <int N>
+template <byte N>
 Coroutines<N>::Coroutines() :
 	activeMask(0),
 	activeCount(0)
 {
+	for (byte i=0; i<N; i++)
+		coroutines[i].id = i;
 }
 
-template <int N>
-Coroutine& Coroutines<N>::add(CoroutineBody function)
+template <byte N>
+Coroutine& Coroutines<N>::start(CoroutineBody function)
 {
-	for (unsigned i = 0; i < min(N, sizeof(unsigned long)); i++)
+	for (byte i = 0; i < min(N, sizeof(unsigned int)); i++)
 		if (!bitRead(activeMask, i))
 		{
 			bitSet(activeMask, i);
 			activeCount++;
 
 			// initialize
-			Serial.print(F("Adding coroutine "));
-			Serial.println(i);
+			trace(P("Adding coroutine #%hhu"), i);
 			Coroutine& coroutine = coroutines[i];
 			coroutine.reset();
 			coroutine.function = function;
@@ -138,11 +133,11 @@ Coroutine& Coroutines<N>::add(CoroutineBody function)
 		}
 
 	// out of coroutines!
-	Serial.println(F("Out of allocated coroutines!"));
-	assert(false);
+	assert(false, P("Out of allocated coroutines!"));
+	abort();
 }
 
-template <int N>
+template <byte N>
 void Coroutines<N>::update(unsigned long millis)
 {
 	int bit = 0;
@@ -150,15 +145,19 @@ void Coroutines<N>::update(unsigned long millis)
 	for (int i = 0; i < activeCount; i++)
 	{
 		while (!bitRead(activeMask, bit))
+		{
 			bit++;
+			if (bit == N) bit = 0;
+		}
+
+		assert(bit >= N, P("Couldn't find active coroutine!"));
 
 		Coroutine& coroutine = coroutines[bit];
 		bool result = coroutine.update(millis);
 		if (result)
 		{
 			// remove coroutine
-			Serial.print(F("Removing coroutine "));
-			Serial.println(bit);
+			trace(P("Removing coroutine #%hhu"), bit);
 			bitClear(activeMask, bit);
 			coroutine.terminated = true;
 			removed++;
@@ -170,7 +169,7 @@ void Coroutines<N>::update(unsigned long millis)
 	activeCount -= removed;
 }
 
-template <int N>
+template <byte N>
 void Coroutines<N>::update()
 {
 	update(millis());

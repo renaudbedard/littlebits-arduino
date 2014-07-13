@@ -16,6 +16,7 @@
 #define USB_PID 0x8036
 #define USB_MANUFACTURER 
 #define USB_PRODUCT "\"Arduino Leonardo\""
+#define _DEBUG 1
 #define ARDUINO 157
 #define ARDUINO_MAIN
 #define __AVR__
@@ -44,6 +45,8 @@ typedef unsigned char byte;
 extern "C" void __cxa_pure_virtual() {;}
 
 //
+bool notifyClear(Coroutine& coroutine);
+bool preview(Coroutine& coroutine);
 bool play(Coroutine& coroutine);
 //
 

@@ -9,7 +9,7 @@ class In
     class Digital
     {
     public:
-        static const byte PlayPause = 0;
+        static const byte Pulse = 0;
     };
     class Analog
     {

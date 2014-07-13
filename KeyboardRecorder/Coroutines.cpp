@@ -11,14 +11,12 @@ Coroutine::~Coroutine()
 
 bool Coroutine::update(unsigned long millis)
 {
-	if (terminated)
-		return true;
 	if (suspended)
 		return false;
 
 	if (barrierTime <= millis)
 	{
-		sinceStarted = millis - startedAt;
+		sinceStarted = startedAt > millis ? 0 : millis - startedAt;
 		return function(*this);
 	}
 
@@ -33,9 +31,12 @@ void Coroutine::reset()
 	terminated = suspended = false;
 	function = NULL;
 	for (int i=0; i<numSavedLocals; i++)
-		free(savedLocals[i].copiedData);
+		free(savedLocals[i]);
 	numSavedLocals = 0;
 	numRecoveredLocals = 0;
+	terminated = false;
+	suspended = false;
+	looping = false;
 }
 
 void Coroutine::wait(unsigned long time)
@@ -47,6 +48,9 @@ void Coroutine::terminate()
 {
 	terminated = true;
 	suspended = false;
+	looping = false;
+	jumpLocation = -1;
+	barrierTime = 0;
 }
 
 void Coroutine::suspend()
@@ -65,4 +69,12 @@ void Coroutine::resume()
 		suspended = false;
 		startedAt += millis() - suspendedAt;
 	}
+}
+
+void Coroutine::loop() 
+{
+	jumpLocation = 0;
+	numRecoveredLocals = 0;
+	looping = true;
+	trace(P("...looping..."));
 }

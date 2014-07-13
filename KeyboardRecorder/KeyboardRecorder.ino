@@ -8,27 +8,27 @@ enum Mode {
     Record
 };
 
-enum PlayMode {
-	Stopped,
-	Playing,
-	Paused
-};
-
 const byte MaxRecordedNotes = 32;
-
 int notes[MaxRecordedNotes];
 byte recordedNotes;
-Mode mode = None;
-PlayMode playMode = Stopped;
-bool buttonLastPressed;
-int keyLastPressed;
-bool keyReleased;
 
+Mode mode = None;
+
+int keyLastPressed;
+unsigned long keyLastPressedAt = 0;
+bool keyReleased;
+bool lastPulse;
+bool needsReset;
+
+Coroutine* previewCoroutine = NULL;
 Coroutine* playCoroutine = NULL;
-Coroutines<1> coroutines;
+Coroutines<3> coroutines;
+
+ADD_PRINTF_SUPPORT();
 
 void setup() 
 {
+	printf_setup();
     Serial.begin(115200);
     analogWrite(Out::Analog::Oscillator, 0);
 }
@@ -37,27 +37,83 @@ void setup()
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
-bool play(Coroutine& coroutine)
+// plays a short bleep when the note buffer is cleared by a long press
+bool notifyClear(Coroutine& coroutine)
 {
-	COROUTINE_LOCAL(byte, i);
 	BEGIN_COROUTINE;
 
-	for (i=0; i<recordedNotes; i++)
-	{
-		Serial.print(F("Playing note "));
-		Serial.println(i);
-		analogWrite(Out::Analog::Oscillator, notes[i]);
+	analogWrite(Out::Analog::Oscillator, keyLastPressed);
+	coroutine.wait(100);
+	COROUTINE_YIELD;
 
-		coroutine.wait(100);
-		COROUTINE_YIELD;
-	}
-
-	playMode = Stopped;
-	Serial.println(F("All done!"));
 	analogWrite(Out::Analog::Oscillator, 0);
 
 	END_COROUTINE;
-	return true;
+}
+
+// previews the last played note
+bool preview(Coroutine& coroutine)
+{
+	BEGIN_COROUTINE;
+
+	if (needsReset) 
+	{
+		// buffer with silence to reset envelopes
+		needsReset = false;
+		coroutine.wait(50);
+		COROUTINE_YIELD;
+	}
+
+	analogWrite(Out::Analog::Oscillator, notes[recordedNotes - 1]);
+
+	coroutine.wait(500);
+	COROUTINE_YIELD;
+
+	// only clear the "current" preview coroutine on normal exit, not external termination
+	previewCoroutine = NULL;
+
+	COROUTINE_FINALLY
+	{			
+		// ensure that the oscillator plays nothing as the coroutine exits OR gets terminated
+		analogWrite(Out::Analog::Oscillator, 0);
+	}
+
+	END_COROUTINE;
+}
+
+bool play(Coroutine& coroutine)
+{
+	// used for local iteration, saved & recovered when yielding
+	COROUTINE_LOCAL(byte, i);
+
+	BEGIN_COROUTINE;
+
+	for (i = 0; i < recordedNotes; i++)
+	{
+		// alternate between plays and rests
+		trace(P("Playing note %hhu"), i);
+		analogWrite(Out::Analog::Oscillator, notes[i]);
+
+		coroutine.suspend();
+		COROUTINE_YIELD;
+
+		trace(P("Resting"));
+		analogWrite(Out::Analog::Oscillator, 0);
+
+		coroutine.suspend();
+		COROUTINE_YIELD;
+	}
+
+	// makes the coroutine loop instead of exiting
+	coroutine.loop();
+
+	COROUTINE_FINALLY;
+	{
+		// since this coroutine loops, this only gets called on termination
+		analogWrite(Out::Analog::Oscillator, 0);
+	}
+
+	END_COROUTINE;
 }
 
 #pragma GCC diagnostic pop
@@ -70,66 +126,70 @@ void loop()
 	Mode lastMode = mode;
 	mode = boolAnalogRead(In::Analog::ModeSwitch) ? Playback : Record;
 
+	// mode toggle
 	if (mode != lastMode)
 	{
-		Serial.println(mode == Playback ? F("Playback mode") : F("Record mode"));
+		trace(mode == Playback ? P("\n** Playback mode **\n") : P("\n** Record mode **\n"));
 		lastMode = mode;
-	}
 
-	if (mode == Playback)
-	{
-		bool buttonPressed = digitalRead(In::Digital::PlayPause) == HIGH;
-		bool buttonNewlyPressed = !buttonLastPressed && buttonPressed;
-		buttonLastPressed = buttonPressed;
-
-		if (buttonNewlyPressed)
+		if (mode == Record && playCoroutine != NULL && !playCoroutine->terminated)
 		{
-			PlayMode lastPlayMode = playMode;
-			switch (lastPlayMode)
+			// terminate playback coroutine when switching to recording mode
+			playCoroutine->terminate();
+			playCoroutine = NULL;
+		}
+
+		if (mode == Playback)
+		{
+			// terminate preview coroutine (if any active) when switching to playback
+			if (previewCoroutine != NULL && !previewCoroutine->terminated)
 			{
-			case Stopped:
-				if (recordedNotes == 0)
-					Serial.println(F("Nothing to play!"));
-				else
-				{
-					playMode = Playing;
-					playCoroutine = &coroutines.add(play);
-				}
-				break;
-
-			case Playing:
-				playMode = Paused;
-				if (!playCoroutine->terminated)
-				{
-					Serial.println(F("Paused"));
-					playCoroutine->suspend();
-				}
-				break;
-
-			case Paused:
-				playMode = Playing;
-				if (!playCoroutine->terminated)
-				{
-					Serial.println(F("Unpaused"));
-					playCoroutine->resume();
-				}
-				break;
+				previewCoroutine->terminate();
+				previewCoroutine = NULL;
 			}
+
+			// start playback coroutine
+			playCoroutine = &coroutines.start(play);
 		}
 	}
-	else // if (mode == Record)
+
+	// mode logic
+	if (mode == Record)
 	{
 		int keyboardValue = analogRead(In::Analog::Keyboard);
-		if (keyboardValue != 0)
+		if (keyboardValue > 0)
 		{
+			if (keyLastPressed == 0)
+				keyLastPressedAt = time;
+
+			if (time - keyLastPressedAt > 1000 && recordedNotes > 0)
+			{
+				trace(P("Clearing recorded notes, held %lu ms"), time - keyLastPressedAt);
+
+				coroutines.start(notifyClear);
+				recordedNotes = 0;
+				keyLastPressedAt = time;
+			}
+
 			if (keyReleased && keyLastPressed == keyboardValue)
 			{
-				Serial.print(F("Recorded "));
-				Serial.println(keyboardValue);
+				if (recordedNotes == MaxRecordedNotes)
+					recordedNotes = 0;
+
+				trace(P("Recorded note %hhu : %i"), recordedNotes, keyboardValue);
 				notes[recordedNotes++] = keyboardValue;
+
+				if (previewCoroutine != NULL && !previewCoroutine->terminated)
+				{
+					needsReset = true;
+					trace(P("Interrupted preview (coroutine #%hhu)"), previewCoroutine->id);
+					previewCoroutine->terminate();
+				}
+				previewCoroutine = &coroutines.start(preview);
 
 				keyReleased = false;
 			}
+
 			keyLastPressed = keyboardValue;
 		}
 		else
@@ -137,6 +197,14 @@ void loop()
 			keyReleased = true;
 			keyLastPressed = 0;
 		}
+	}
+	else // if (mode == Playback)
+ 	{
+		// for each value change, wake up the playback coroutine
+		bool thisPulse = digitalRead(In::Digital::Pulse) == HIGH;
+		if ((thisPulse != lastPulse) && playCoroutine->suspended)
+			playCoroutine->resume();
+		lastPulse = thisPulse;
 	}
 }
 
