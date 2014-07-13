@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <avr/pgmspace.h>
 
-#define ADD_PRINTF_SUPPORT()												\
+#define ADD_PRINTF_SUPPORT													\
 	static FILE uartout = {0};												\
 	static int uart_putchar(char c, FILE* stream)							\
 	{																		\
@@ -42,5 +42,6 @@
 bool boolAnalogRead(byte pin);
 float floatAnalogRead(byte pin);
 void floatAnalogWrite(byte pin, float value);
+int medianAnalogRead(byte pin);
 
 #endif

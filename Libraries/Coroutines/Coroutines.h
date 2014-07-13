@@ -2,7 +2,20 @@
 #define COROUTINES_H
 
 #include "Arduino.h"
-#include "Util.h"
+
+// debugging macros, null operations unless defined prior to including this .h
+// trace is a redirect to printf
+#ifndef trace
+#define trace(...)
+#endif
+// assert should be : while(cond) { trace(__VA_ARGS__); }
+#ifndef assert
+#define assert(cond, ...)
+#endif
+// P is a shortcut to PSTR (or F, but PSTR plays better with printf) with a "\n" appended
+#ifndef P
+#define P(string_literal)
+#endif
 
 #define BEGIN_COROUTINE										\
 	trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),	\
@@ -58,10 +71,6 @@ public:
 	CoroutineBody function;
 	unsigned long barrierTime, sinceStarted, startedAt, suspendedAt;
 
-	//void* barrierToCompare;
-	//void* barrierComparedValue;
-	//size_t comparedSize;
-
 	byte id;
 	bool terminated, suspended, looping;
 	long jumpLocation;
@@ -73,9 +82,6 @@ public:
 
 	void reset();
 	bool update(unsigned long millis);
-
-	//template <typename T>
-	//void waitFor(T* pointer, T equals);
 
 	void wait(unsigned long millis);
 	void terminate();
@@ -174,10 +180,5 @@ void Coroutines<N>::update()
 {
 	update(millis());
 }
-
-//template <typename T>
-//void Coroutine::waitFor(T* pointer, T equals)
-//{
-//}
 
 #endif

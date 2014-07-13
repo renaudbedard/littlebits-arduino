@@ -16,7 +16,6 @@
 #define USB_PID 0x8036
 #define USB_MANUFACTURER 
 #define USB_PRODUCT "\"Arduino Leonardo\""
-#define _DEBUG 1
 #define ARDUINO 157
 #define ARDUINO_MAIN
 #define __AVR__
@@ -52,10 +51,6 @@ bool play(Coroutine& coroutine);
 
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino\arduino.h"
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\variants\leonardo\pins_arduino.h" 
-#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\KeyboardRecorder.ino"
-#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Coroutines.cpp"
-#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Coroutines.h"
-#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Pins.h"
-#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Util.cpp"
-#include "C:\Users\Renaud\Documents\Arduino\littlebits-arduino.git\KeyboardRecorder\Util.h"
+#include "C:\Users\Renaud\Documents\Arduino\Sketches\KeyboardRecorder\KeyboardRecorder.ino"
+#include "C:\Users\Renaud\Documents\Arduino\Sketches\KeyboardRecorder\Pins.h"
 #endif

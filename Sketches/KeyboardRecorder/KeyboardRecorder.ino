@@ -1,11 +1,11 @@
+#include <Util.h>
+#include <Coroutines.h>
 #include "Pins.h"
-#include "Util.h"
-#include "Coroutines.h"
 
 enum Mode {
 	None,
-    Playback,
-    Record
+	Playback,
+	Record
 };
 
 const byte MaxRecordedNotes = 32;
@@ -24,13 +24,17 @@ Coroutine* previewCoroutine = NULL;
 Coroutine* playCoroutine = NULL;
 Coroutines<3> coroutines;
 
-ADD_PRINTF_SUPPORT();
+#if _DEBUG
+ADD_PRINTF_SUPPORT;
+#endif
 
-void setup() 
+void setup()
 {
+#if _DEBUG
 	printf_setup();
-    Serial.begin(115200);
-    analogWrite(Out::Analog::Oscillator, 0);
+#endif
+	Serial.begin(115200);
+	analogWrite(Out::Analog::Oscillator, 0);
 }
 
 // this avoids the (false postive) warning for coroutine locals
@@ -156,7 +160,8 @@ void loop()
 	// mode logic
 	if (mode == Record)
 	{
-		int keyboardValue = analogRead(In::Analog::Keyboard);
+		int keyboardValue = medianAnalogRead(In::Analog::Keyboard);
+
 		if (keyboardValue > 0)
 		{
 			if (keyLastPressed == 0)
@@ -171,7 +176,7 @@ void loop()
 				keyLastPressedAt = time;
 			}
 
-			if (keyReleased && keyLastPressed == keyboardValue)
+			if (keyReleased)
 			{
 				if (recordedNotes == MaxRecordedNotes)
 					recordedNotes = 0;
@@ -199,7 +204,7 @@ void loop()
 		}
 	}
 	else // if (mode == Playback)
- 	{
+	{
 		// for each value change, wake up the playback coroutine
 		bool thisPulse = digitalRead(In::Digital::Pulse) == HIGH;
 		if ((thisPulse != lastPulse) && playCoroutine->suspended)
