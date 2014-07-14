@@ -1,6 +1,6 @@
 /*
   Coroutines.h - Library providing a simple coroutine system.
-  Created by Renaud Bédard, July 14th, 2014.
+  Created by Renaud Bï¿½dard, July 14th, 2014.
   Released into the public domain.
 
   The variant of coroutines proposed in this library are inspired by Unity coroutines
@@ -166,42 +166,43 @@
 #define P(string_literal)
 #endif
 
-#define BEGIN_COROUTINE										\
-	trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),	\
+#define BEGIN_COROUTINE							\
+	trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),		\
 		  coroutine.id, __func__, coroutine.sinceStarted);	\
-	switch (coroutine.jumpLocation)							\
-	{														\
+	switch (coroutine.jumpLocation)					\
+	{								\
 	case 0:										
 
-#define COROUTINE_LOCAL(type, name)														\
-		byte COROUTINE_localIndex = 0;													\
-		if (coroutine.jumpLocation == 0 && !coroutine.looping)							\
-		{																				\
-			assert(coroutine.numSavedLocals >= Coroutine::MaxLocals,					\
+#define COROUTINE_LOCAL(type, name)									\
+		byte COROUTINE_localIndex = 0;								\
+		if (coroutine.jumpLocation == 0 && !coroutine.looping)					\
+		{											\
+			assert(coroutine.numSavedLocals >= Coroutine::MaxLocals,			\
 				   P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));	\
 			trace(P("Allocating local '" #name "' (#%hhu)"), coroutine.numSavedLocals);	\
-			COROUTINE_localIndex = coroutine.numSavedLocals;							\
+			COROUTINE_localIndex = coroutine.numSavedLocals;				\
 			coroutine.savedLocals[coroutine.numSavedLocals++] = malloc(sizeof(type));	\
-		}																				\
-		else																			\
-			COROUTINE_localIndex = coroutine.numRecoveredLocals++;						\
+		}											\
+		else											\
+			COROUTINE_localIndex = coroutine.numRecoveredLocals++;				\
 		type& name = *((type*) coroutine.savedLocals[COROUTINE_localIndex]);
 
-#define COROUTINE_YIELD						\
+#define COROUTINE_YIELD					\
 		coroutine.jumpLocation = __LINE__;	\
 		coroutine.numRecoveredLocals = 0;	\
-		trace(P("...yielding..."));			\
+		trace(P("...yielding..."));		\
+		return;					\
 	case __LINE__:	
 
 #define COROUTINE_FINALLY		\
-	case -1:					\
+	case -1:			\
 		if (coroutine.looping)	\
 			break;				
 
-#define END_COROUTINE							\
-	default:									\
-		_NOP();									\
-	}											\
+#define END_COROUTINE					\
+	default:					\
+		_NOP();					\
+	}						\
 	coroutine.terminated = !coroutine.looping;	\
 	return;
 	
