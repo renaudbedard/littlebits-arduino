@@ -1,6 +1,6 @@
 /*
   Coroutines.h - Library providing a simple coroutine system.
-  Created by Renaud B�dard, July 14th, 2014.
+  Created by Renaud Bédard, July 14th, 2014.
   Released into the public domain.
 
   The variant of coroutines proposed in this library are inspired by Unity coroutines
