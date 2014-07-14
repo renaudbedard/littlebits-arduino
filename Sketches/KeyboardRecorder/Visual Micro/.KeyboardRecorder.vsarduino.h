@@ -44,9 +44,9 @@ typedef unsigned char byte;
 extern "C" void __cxa_pure_virtual() {;}
 
 //
-bool notifyClear(Coroutine& coroutine);
-bool preview(Coroutine& coroutine);
-bool play(Coroutine& coroutine);
+void notifyClear(Coroutine& coroutine);
+void preview(Coroutine& coroutine);
+void play(Coroutine& coroutine);
 //
 
 #include "C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino\arduino.h"

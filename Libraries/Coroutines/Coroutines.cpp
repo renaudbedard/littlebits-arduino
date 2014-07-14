@@ -1,13 +1,14 @@
+/*
+  Coroutines.cpp - Library providing a simple coroutine system.
+  Created by Renaud Bédard, July 14th, 2014.
+  Released into the public domain.
+
+  See header file for full documentation.
+*/
+
+
 #include "Coroutines.h"
 #include "Arduino.h"
-
-Coroutine::Coroutine()
-{
-}
-
-Coroutine::~Coroutine()
-{
-}
 
 bool Coroutine::update(unsigned long millis)
 {
@@ -17,7 +18,8 @@ bool Coroutine::update(unsigned long millis)
 	if (barrierTime <= millis)
 	{
 		sinceStarted = startedAt > millis ? 0 : millis - startedAt;
-		return function(*this);
+		function(*this);
+		return terminated;
 	}
 
 	return false;

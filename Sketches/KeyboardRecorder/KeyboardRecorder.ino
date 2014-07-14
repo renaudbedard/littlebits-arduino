@@ -1,5 +1,6 @@
 #include <Util.h>
 #include <Coroutines.h>
+#include <EEPROM\EEPROM.h>
 #include "Pins.h"
 
 enum Mode {
@@ -42,7 +43,7 @@ void setup()
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 // plays a short bleep when the note buffer is cleared by a long press
-bool notifyClear(Coroutine& coroutine)
+void notifyClear(Coroutine& coroutine)
 {
 	BEGIN_COROUTINE;
 
@@ -56,7 +57,7 @@ bool notifyClear(Coroutine& coroutine)
 }
 
 // previews the last played note
-bool preview(Coroutine& coroutine)
+void preview(Coroutine& coroutine)
 {
 	BEGIN_COROUTINE;
 
@@ -85,7 +86,7 @@ bool preview(Coroutine& coroutine)
 	END_COROUTINE;
 }
 
-bool play(Coroutine& coroutine)
+void play(Coroutine& coroutine)
 {
 	// used for local iteration, saved & recovered when yielding
 	COROUTINE_LOCAL(byte, i);
