@@ -212,8 +212,8 @@
     if (COROUTINE_CONTEXT.jumpLocation == 0 && !COROUTINE_CONTEXT.looping)                         \
     {                                                                                              \
         assert(COROUTINE_CONTEXT.numSavedLocals >= Coroutine::MaxLocals,                           \
-                P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));	               \
-        trace(P("Allocating local '" #name "' (#%hhu)"), COROUTINE_CONTEXT.numSavedLocals);	       \
+               P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));                   \
+        trace(P("Allocating local '" #name "' (#%hhu)"), COROUTINE_CONTEXT.numSavedLocals);        \
         COROUTINE_localIndex = COROUTINE_CONTEXT.numSavedLocals;                                   \
         COROUTINE_CONTEXT.savedLocals[COROUTINE_CONTEXT.numSavedLocals++] = malloc(sizeof(type));  \
     }                                                                                              \
