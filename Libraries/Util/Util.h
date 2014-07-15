@@ -6,18 +6,18 @@
 #include <avr/pgmspace.h>
 
 #define ADD_PRINTF_SUPPORT													\
-	static FILE uartout = {0};												\
-	static int uart_putchar(char c, FILE* stream)							\
-	{																		\
-		(void) stream;														\
-		Serial.write(c);													\
-		return c;															\
-	}																		\
-	static void printf_setup()												\
-	{																		\
-		fdev_setup_stream(&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);	\
-		stdout = &uartout;													\
-	}
+    static FILE uartout = {0};												\
+    static int uart_putchar(char c, FILE* stream)							\
+    {																		\
+        (void) stream;														\
+        Serial.write(c);													\
+        return c;															\
+    }																		\
+    static void printf_setup()												\
+    {																		\
+        fdev_setup_stream(&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);	\
+        stdout = &uartout;													\
+    }
 
 #define P(string_literal) PSTR(string_literal "\n")
 
@@ -26,11 +26,11 @@
 #ifdef _DEBUG
 
 #define assert(cond, ...)		\
-	while (cond)				\
-		printf_P(__VA_ARGS__);
+    while (cond)				\
+        printf_P(__VA_ARGS__);
 
 #define trace(...)				\
-	printf_P(__VA_ARGS__)
+    printf_P(__VA_ARGS__)
 
 #else
 
