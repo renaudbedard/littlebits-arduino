@@ -17,20 +17,20 @@
 
   A simple coroutine is declared like this :
 
-	// flashes a LED attached to analog pin 5 for 100ms
-	void flashOnce(Coroutine& coroutine)
-	{
-		BEGIN_COROUTINE;
+    // flashes a LED attached to analog pin 5 for 100ms
+    void flashOnce(Coroutine& coroutine)
+    {
+        BEGIN_COROUTINE;
 
-		analogWrite(5, 255);
+        analogWrite(5, 255);
 
-		coroutine.wait(100);
-		COROUTINE_YIELD;
+        coroutine.wait(100);
+        COROUTINE_YIELD;
 
-		analogWrite(5, 0);
+        analogWrite(5, 0);
 
-		END_COROUTINE;
-	}
+        END_COROUTINE;
+    }
 
   Here, the "wait" call adds 100ms to the timer that will prevent the coroutine from
   resuming on the next update. The COROUTINE_YIELD macro exits the function, and
@@ -40,27 +40,27 @@
   You may also use "coroutine locals", which are variables local to the coroutine
   and whose state will be preserved after a yield and recovered when resuming :
 
-	void flashThrice(Coroutine& coroutine)
-	{
-		COROUTINE_LOCAL(int, i);
+    void flashThrice(Coroutine& coroutine)
+    {
+        COROUTINE_LOCAL(int, i);
 
-		BEGIN_COROUTINE;
+        BEGIN_COROUTINE;
 
-		for (i = 0; i < 3; i++)
-		{
-			analogWrite(5, 255);
+        for (i = 0; i < 3; i++)
+        {
+            analogWrite(5, 255);
 
-			coroutine.wait(100);
-			COROUTINE_YIELD;
+            coroutine.wait(100);
+            COROUTINE_YIELD;
 
-			analogWrite(5, 0);
+            analogWrite(5, 0);
 
-			coroutine.wait(50);
-			COROUTINE_YIELD;
-		}
+            coroutine.wait(50);
+            COROUTINE_YIELD;
+        }
 
-		END_COROUTINE;
-	}
+        END_COROUTINE;
+    }
 
   Notice that the for(;;) loop does not declare "i" since it already has been.
   However, its value is undefined, like any other variable, until it's first set.
@@ -73,16 +73,16 @@
 
   There are some preconditions that the sketch must meet to use coroutines :
   1. Declare a Coroutines<N> object, where N is the number of preallocated coroutines
-	 required. In other words, the number of coroutines you expect your program to 
-	 "concurrently" run.
+     required. In other words, the number of coroutines you expect your program to 
+     "concurrently" run.
   2. In your loop() function, call the update() function on that Coroutines<N> object.
   
   Declared coroutines will not be started automatically. The sketch needs to start
   them with a function call :
 
-	// where "coroutines" is a Coroutine<N> instance,
-	// and "flashOnce" is the name of a declared coroutine
-	coroutines.start(flashOnce);
+    // where "coroutines" is a Coroutine<N> instance,
+    // and "flashOnce" is the name of a declared coroutine
+    coroutines.start(flashOnce);
 
   This fires the coroutine, which will begin in the next update.
   The return type of the function must be void, and it must take a Coroutine object
@@ -107,22 +107,22 @@
   To let a coroutine clean up after an external termination, you can use the
   COROUTINE_FINALLY macro like this :
 
-	void finallyExample(Coroutine& coroutine)
-	{
-		BEGIN_COROUTINE;
+    void finallyExample(Coroutine& coroutine)
+    {
+        BEGIN_COROUTINE;
 
-		coroutine.wait(1000);
-		COROUTINE_YIELD;
+        coroutine.wait(1000);
+        COROUTINE_YIELD;
 
-		Serial.println("Waited 1000ms");
+        Serial.println("Waited 1000ms");
 
-		COROUTINE_FINALLY
-		{
-			Serial.println("Exiting...");
-		}
+        COROUTINE_FINALLY
+        {
+            Serial.println("Exiting...");
+        }
 
-		END_COROUTINE;
-	}
+        END_COROUTINE;
+    }
 
   In this example, the "Exiting..." string will be printed whether the coroutine
   is externally terminated or if it finished execution normally, after waiting 1000ms.
@@ -167,45 +167,45 @@
 #endif
 
 #define BEGIN_COROUTINE                                    \
-	trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),  \
-		  coroutine.id, __func__, coroutine.sinceStarted); \
-	switch (coroutine.jumpLocation)                        \
-	{                                                      \
-	case 0:										
+    trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),  \
+          coroutine.id, __func__, coroutine.sinceStarted); \
+    switch (coroutine.jumpLocation)                        \
+    {                                                      \
+    case 0:										
 
 #define COROUTINE_LOCAL(type, name)                                                     \
-		byte COROUTINE_localIndex = 0;                                                  \
-		if (coroutine.jumpLocation == 0 && !coroutine.looping)                          \
-		{                                                                               \
-			assert(coroutine.numSavedLocals >= Coroutine::MaxLocals,                    \
-				   P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));	\
-			trace(P("Allocating local '" #name "' (#%hhu)"), coroutine.numSavedLocals);	\
-			COROUTINE_localIndex = coroutine.numSavedLocals;                            \
-			coroutine.savedLocals[coroutine.numSavedLocals++] = malloc(sizeof(type));	\
-		}                                                                               \
-		else                                                                            \
-			COROUTINE_localIndex = coroutine.numRecoveredLocals++;                      \
-		type& name = *((type*) coroutine.savedLocals[COROUTINE_localIndex]);
+        byte COROUTINE_localIndex = 0;                                                  \
+        if (coroutine.jumpLocation == 0 && !coroutine.looping)                          \
+        {                                                                               \
+            assert(coroutine.numSavedLocals >= Coroutine::MaxLocals,                    \
+                   P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));	\
+            trace(P("Allocating local '" #name "' (#%hhu)"), coroutine.numSavedLocals);	\
+            COROUTINE_localIndex = coroutine.numSavedLocals;                            \
+            coroutine.savedLocals[coroutine.numSavedLocals++] = malloc(sizeof(type));	\
+        }                                                                               \
+        else                                                                            \
+            COROUTINE_localIndex = coroutine.numRecoveredLocals++;                      \
+        type& name = *((type*) coroutine.savedLocals[COROUTINE_localIndex]);
 
 #define COROUTINE_YIELD                     \
-		coroutine.jumpLocation = __LINE__;  \
-		coroutine.numRecoveredLocals = 0;   \
-		trace(P("...yielding..."));         \
-		return;                             \
-	case __LINE__:	
+        coroutine.jumpLocation = __LINE__;  \
+        coroutine.numRecoveredLocals = 0;   \
+        trace(P("...yielding..."));         \
+        return;                             \
+    case __LINE__:	
 
 #define COROUTINE_FINALLY       \
-	case -1:                    \
-		if (coroutine.looping)  \
-			break;				
+    case -1:                    \
+        if (coroutine.looping)  \
+            break;				
 
 #define END_COROUTINE                          \
-	default:                                   \
-		_NOP();                                \
-	}                                          \
-	coroutine.terminated = !coroutine.looping; \
-	return;
-	
+    default:                                   \
+        _NOP();                                \
+    }                                          \
+    coroutine.terminated = !coroutine.looping; \
+    return;
+    
 // --
 
 class Coroutine;
@@ -216,25 +216,25 @@ typedef void (*CoroutineBody)(Coroutine&);
 class Coroutine
 {
 public:
-	const static byte MaxLocals = 8;
+    const static byte MaxLocals = 8;
 
-	CoroutineBody function;
-	unsigned long barrierTime, sinceStarted, startedAt, suspendedAt;
+    CoroutineBody function;
+    unsigned long barrierTime, sinceStarted, startedAt, suspendedAt;
 
-	byte id;
-	bool terminated, suspended, looping;
-	long jumpLocation;
-	void* savedLocals[MaxLocals];
-	byte numSavedLocals, numRecoveredLocals;
+    byte id;
+    bool terminated, suspended, looping;
+    long jumpLocation;
+    void* savedLocals[MaxLocals];
+    byte numSavedLocals, numRecoveredLocals;
 
-	void reset();
-	bool update(unsigned long millis);
+    void reset();
+    bool update(unsigned long millis);
 
-	void wait(unsigned long millis);
-	void terminate();
-	void suspend();
-	void resume();
-	void loop();
+    void wait(unsigned long millis);
+    void terminate();
+    void suspend();
+    void resume();
+    void loop();
 };
 
 // --
@@ -243,89 +243,89 @@ template <byte N>
 class Coroutines
 {
 private:
-	Coroutine coroutines[N];
-	unsigned int activeMask;
-	byte activeCount;
+    Coroutine coroutines[N];
+    unsigned int activeMask;
+    byte activeCount;
 
 public:
-	Coroutines();
+    Coroutines();
 
-	Coroutine& start(CoroutineBody function);
-	void update(unsigned long millis);
-	void update();
+    Coroutine& start(CoroutineBody function);
+    void update(unsigned long millis);
+    void update();
 };
 
 // --
 
 template <byte N>
 Coroutines<N>::Coroutines() :
-	activeMask(0),
-	activeCount(0)
+    activeMask(0),
+    activeCount(0)
 {
-	for (byte i=0; i<N; i++)
-		coroutines[i].id = i;
+    for (byte i=0; i<N; i++)
+        coroutines[i].id = i;
 }
 
 template <byte N>
 Coroutine& Coroutines<N>::start(CoroutineBody function)
 {
-	for (byte i = 0; i < min(N, sizeof(unsigned int)); i++)
-		if (!bitRead(activeMask, i))
-		{
-			bitSet(activeMask, i);
-			activeCount++;
+    for (byte i = 0; i < min(N, sizeof(unsigned int)); i++)
+        if (!bitRead(activeMask, i))
+        {
+            bitSet(activeMask, i);
+            activeCount++;
 
-			// initialize
-			trace(P("Adding coroutine #%hhu"), i);
-			Coroutine& coroutine = coroutines[i];
-			coroutine.reset();
-			coroutine.function = function;
-			coroutine.startedAt = millis();
+            // initialize
+            trace(P("Adding coroutine #%hhu"), i);
+            Coroutine& coroutine = coroutines[i];
+            coroutine.reset();
+            coroutine.function = function;
+            coroutine.startedAt = millis();
 
-			return coroutine;
-		}
+            return coroutine;
+        }
 
-	// out of coroutines!
-	assert(false, P("Out of allocated coroutines!"));
-	abort();
+    // out of coroutines!
+    assert(false, P("Out of allocated coroutines!"));
+    abort();
 }
 
 template <byte N>
 void Coroutines<N>::update(unsigned long millis)
 {
-	int bit = 0;
-	int removed = 0;
-	for (int i = 0; i < activeCount; i++)
-	{
-		while (!bitRead(activeMask, bit))
-		{
-			bit++;
-			if (bit == N) bit = 0;
-		}
+    int bit = 0;
+    int removed = 0;
+    for (int i = 0; i < activeCount; i++)
+    {
+        while (!bitRead(activeMask, bit))
+        {
+            bit++;
+            if (bit == N) bit = 0;
+        }
 
-		assert(bit >= N, P("Couldn't find active coroutine!"));
+        assert(bit >= N, P("Couldn't find active coroutine!"));
 
-		Coroutine& coroutine = coroutines[bit];
-		bool result = coroutine.update(millis);
-		if (result)
-		{
-			// remove coroutine
-			trace(P("Removing coroutine #%hhu"), bit);
-			bitClear(activeMask, bit);
-			coroutine.terminated = true;
-			removed++;
-		}
+        Coroutine& coroutine = coroutines[bit];
+        bool result = coroutine.update(millis);
+        if (result)
+        {
+            // remove coroutine
+            trace(P("Removing coroutine #%hhu"), bit);
+            bitClear(activeMask, bit);
+            coroutine.terminated = true;
+            removed++;
+        }
 
-		bit++;
-	}
+        bit++;
+    }
 
-	activeCount -= removed;
+    activeCount -= removed;
 }
 
 template <byte N>
 void Coroutines<N>::update()
 {
-	update(millis());
+    update(millis());
 }
 
 #endif
