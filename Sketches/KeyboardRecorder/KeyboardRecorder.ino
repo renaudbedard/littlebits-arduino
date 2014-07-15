@@ -65,6 +65,7 @@ void preview(Coroutine& coroutine)
 	{
 		// buffer with silence to reset envelopes
 		needsReset = false;
+		analogWrite(Out::Analog::Oscillator, 0);
 		coroutine.wait(50);
 		COROUTINE_YIELD;
 	}
@@ -161,7 +162,7 @@ void loop()
 	// mode logic
 	if (mode == Record)
 	{
-		int keyboardValue = medianAnalogRead(In::Analog::Keyboard);
+		int keyboardValue = smartMedianAnalogRead(In::Analog::Keyboard);
 
 		if (keyboardValue > 0)
 		{

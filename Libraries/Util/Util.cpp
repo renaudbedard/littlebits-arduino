@@ -16,11 +16,11 @@ void floatAnalogWrite(byte pin, float value)
 	analogWrite(pin, (int) round(value * 255));
 }
 
-int medianAnalogRead(byte pin)
+int smartMedianAnalogRead(byte pin)
 {
-#ifdef _DEBUG
-	unsigned long t = micros();
-#endif
+//#ifdef _DEBUG
+//	unsigned long t = micros();
+//#endif
 
 	struct Bucket 
 	{
@@ -28,14 +28,12 @@ int medianAnalogRead(byte pin)
 		byte Count;
 	};
 
-	static const byte SampleCount = 32;
-	static const byte AveragedBucketCount = 3;
-	static Bucket buckets[16];
+	static Bucket buckets[MedianMaxBuckets];
 
 	memset(&buckets, 0, sizeof buckets);
 
 	byte bucketCount = 0;
-	for (byte i = 0; i < SampleCount; i++)
+	for (byte i = 0; i < MedianSampleCount; i++)
 	{
 		int sample = analogRead(pin);
 
@@ -53,39 +51,56 @@ int medianAnalogRead(byte pin)
 			bucketCount++;
 			buckets[bucketCount].Value = sample;
 			buckets[bucketCount].Count = 1;
-			// skip "most hit" test/set for count == 1
 		}
 	}
 
-	byte mostHitBuckets[AveragedBucketCount];
-	byte mostHits = 0;
+	Bucket* averagedBuckets[MedianAveragedBuckets];
+	for (byte i = 0; i < MedianAveragedBuckets; i++)
+		averagedBuckets[i] = &buckets[i];
 
-	memset(&mostHitBuckets, 0, sizeof mostHitBuckets);
-
-	for (byte i = 0; i < bucketCount; i++)
-		if (mostHits < buckets[i].Count)
-		{
-			for (byte j = 1; j < AveragedBucketCount; j++)
-				mostHitBuckets[j] = mostHitBuckets[j - 1];
-			mostHitBuckets[0] = i;
-			mostHits = buckets[i].Count;
-		}
-
+	for (byte i = MedianAveragedBuckets; i < bucketCount; i++)
+	{
+		byte thisCount = buckets[i].Count;
+		for (byte j = 0; j < MedianAveragedBuckets; j++)
+			if (thisCount >= averagedBuckets[j]->Count)
+			{
+				averagedBuckets[j] = &buckets[i];
+				break;
+			}
+	}
+		
 	int weight = 0;
 	long accum = 0;
-	for (byte i = 0; i < AveragedBucketCount; i++)
+	int minValue = 32767, maxValue = 0;
+	for (byte i = 0; i < MedianAveragedBuckets; i++)
 	{
-		const Bucket& bucket = buckets[mostHitBuckets[i]];
+		const Bucket& bucket = *averagedBuckets[i];
+
+		minValue = min(minValue, bucket.Value);
+		maxValue = max(maxValue, bucket.Value);
+
 		accum += bucket.Value * bucket.Count;
 		weight += bucket.Count;
 	}
 
-	int value = (int) round(accum / (float) weight);
+	int value;
+	if (maxValue - minValue > MedianMaxVariance)
+		value = 0;
+	else
+		value = (int) floor(accum / (float) weight);
 
-#ifdef _DEBUG
-	t = micros() - t;
-#endif
-	trace(P("sampled %i from %hhu buckets (%i, %i, %i) in %u ms"), value, bucketCount, buckets[mostHitBuckets[0]].Value, buckets[mostHitBuckets[1]].Value, buckets[mostHitBuckets[2]].Value, (unsigned int) (t / 1000));
+//#ifdef _DEBUG
+//	t = micros() - t;
+//#endif
+//	trace(P("%i < %hhu (%i-%hhu, %i-%hhu, %i-%hhu, %i-%hhu, %i-%hhu) [%i ~ %i] (%ums)"), 
+//		value, bucketCount, 
+//		averagedBuckets[0] == NULL ? 0 : averagedBuckets[0]->Value, averagedBuckets[0] == NULL ? 0 : averagedBuckets[0]->Count,
+//		averagedBuckets[1] == NULL ? 0 : averagedBuckets[1]->Value, averagedBuckets[1] == NULL ? 0 : averagedBuckets[1]->Count,
+//		averagedBuckets[2] == NULL ? 0 : averagedBuckets[2]->Value, averagedBuckets[2] == NULL ? 0 : averagedBuckets[2]->Count,
+//		averagedBuckets[3] == NULL ? 0 : averagedBuckets[3]->Value, averagedBuckets[3] == NULL ? 0 : averagedBuckets[3]->Count,
+//		averagedBuckets[4] == NULL ? 0 : averagedBuckets[4]->Value, averagedBuckets[4] == NULL ? 0 : averagedBuckets[4]->Count,
+//		minValue, maxValue,
+//		(unsigned int) (t / 1000.0f));
 
 	return value;
 }

@@ -42,6 +42,12 @@
 bool boolAnalogRead(byte pin);
 float floatAnalogRead(byte pin);
 void floatAnalogWrite(byte pin, float value);
-int medianAnalogRead(byte pin);
+
+static const byte MedianSampleCount = 24;
+static const byte MedianMaxBuckets = 16;
+static const byte MedianAveragedBuckets = 3;
+static const byte MedianMaxVariance = 10;
+
+int smartMedianAnalogRead(byte pin);
 
 #endif
