@@ -1,7 +1,7 @@
 #include <Util.h>
-#include <Coroutines.h>
 #include <EEPROM\EEPROM.h>
 #include "Pins.h"
+#include <Coroutines.h>
 
 enum Mode {
 	None,
@@ -56,8 +56,11 @@ void notifyClear(Coroutine& coroutine)
 	END_COROUTINE;
 }
 
+#undef COROUTINE_CONTEXT
+#define COROUTINE_CONTEXT c
+
 // previews the last played note
-void preview(Coroutine& coroutine)
+void preview(Coroutine& c)
 {
 	BEGIN_COROUTINE;
 
@@ -66,13 +69,13 @@ void preview(Coroutine& coroutine)
 		// buffer with silence to reset envelopes
 		needsReset = false;
 		analogWrite(Out::Analog::Oscillator, 0);
-		coroutine.wait(50);
+		c.wait(50);
 		COROUTINE_YIELD;
 	}
 
 	analogWrite(Out::Analog::Oscillator, notes[recordedNotes - 1]);
 
-	coroutine.wait(500);
+	c.wait(500);
 	COROUTINE_YIELD;
 
 	// only clear the "current" preview coroutine on normal exit, not external termination
@@ -86,6 +89,9 @@ void preview(Coroutine& coroutine)
 
 	END_COROUTINE;
 }
+
+#undef COROUTINE_CONTEXT
+#define COROUTINE_CONTEXT coroutine
 
 void play(Coroutine& coroutine)
 {

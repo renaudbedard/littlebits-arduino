@@ -71,6 +71,43 @@
   there is a maximum amount of them which defaults to 8, but can be tweaked in
   this header. (see Coroutine::MaxLocals)
 
+  Coroutines may also loop instead of evaluate once, using the loop() function :
+
+    void flashForever(Coroutine& coroutine)
+    {
+        BEGIN_COROUTINE;
+
+        analogWrite(5, 255);
+
+        coroutine.wait(100);
+        COROUTINE_YIELD;
+
+        analogWrite(5, 0);
+
+        coroutine.wait(50);
+        COROUTINE_YIELD;
+
+        coroutine.loop();
+
+        END_COROUTINE;
+    }
+
+  If the loop() function is not called in one of its iterations, the loop stops and
+  the coroutine will end its execution normally.
+
+  The default name of the coroutine by-reference context parameter is "coroutine",
+  but it is possible to override it by redefining the COROTUTINE_CONTEXT macro :
+
+    #undef COROUTINE_CONTEXT
+    #define COROUTINE_CONTEXT myContext
+    
+    void flashForever(Coroutine& myContext)
+    {
+        ...
+
+  The redefinition can be done before including the header file, or anywhere before
+  defining a coroutine function, as well as in between two functions.
+
   There are some preconditions that the sketch must meet to use coroutines :
   1. Declare a Coroutines<N> object, where N is the number of preallocated coroutines
      required. In other words, the number of coroutines you expect your program to 
@@ -166,44 +203,49 @@
 #define P(string_literal)
 #endif
 
-#define BEGIN_COROUTINE                                    \
-    trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),  \
-          coroutine.id, __func__, coroutine.sinceStarted); \
-    switch (coroutine.jumpLocation)                        \
-    {                                                      \
+#ifndef COROUTINE_CONTEXT
+#define COROUTINE_CONTEXT coroutine
+#endif
+
+#define COROUTINE_LOCAL(type, name)                                                                \
+    byte COROUTINE_localIndex = 0;                                                                 \
+    if (COROUTINE_CONTEXT.jumpLocation == 0 && !COROUTINE_CONTEXT.looping)                         \
+    {                                                                                              \
+        assert(COROUTINE_CONTEXT.numSavedLocals >= Coroutine::MaxLocals,                           \
+                P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));	               \
+        trace(P("Allocating local '" #name "' (#%hhu)"), COROUTINE_CONTEXT.numSavedLocals);	       \
+        COROUTINE_localIndex = COROUTINE_CONTEXT.numSavedLocals;                                   \
+        COROUTINE_CONTEXT.savedLocals[COROUTINE_CONTEXT.numSavedLocals++] = malloc(sizeof(type));  \
+    }                                                                                              \
+    else                                                                                           \
+        COROUTINE_localIndex = COROUTINE_CONTEXT.numRecoveredLocals++;                             \
+    type& name = *((type*) COROUTINE_CONTEXT.savedLocals[COROUTINE_localIndex]);
+
+#define BEGIN_COROUTINE                                                     \
+    trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),                   \
+          COROUTINE_CONTEXT.id, __func__, COROUTINE_CONTEXT.sinceStarted);  \
+    COROUTINE_CONTEXT.looping = false;                                      \
+    switch (COROUTINE_CONTEXT.jumpLocation)                                 \
+    {                                                                       \
     case 0:										
 
-#define COROUTINE_LOCAL(type, name)                                                     \
-        byte COROUTINE_localIndex = 0;                                                  \
-        if (coroutine.jumpLocation == 0 && !coroutine.looping)                          \
-        {                                                                               \
-            assert(coroutine.numSavedLocals >= Coroutine::MaxLocals,                    \
-                   P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));	\
-            trace(P("Allocating local '" #name "' (#%hhu)"), coroutine.numSavedLocals);	\
-            COROUTINE_localIndex = coroutine.numSavedLocals;                            \
-            coroutine.savedLocals[coroutine.numSavedLocals++] = malloc(sizeof(type));	\
-        }                                                                               \
-        else                                                                            \
-            COROUTINE_localIndex = coroutine.numRecoveredLocals++;                      \
-        type& name = *((type*) coroutine.savedLocals[COROUTINE_localIndex]);
-
-#define COROUTINE_YIELD                     \
-        coroutine.jumpLocation = __LINE__;  \
-        coroutine.numRecoveredLocals = 0;   \
-        trace(P("...yielding..."));         \
-        return;                             \
+#define COROUTINE_YIELD                             \
+        COROUTINE_CONTEXT.jumpLocation = __LINE__;  \
+        COROUTINE_CONTEXT.numRecoveredLocals = 0;   \
+        trace(P("...yielding..."));                 \
+        return;                                     \
     case __LINE__:	
 
-#define COROUTINE_FINALLY       \
-    case -1:                    \
-        if (coroutine.looping)  \
+#define COROUTINE_FINALLY               \
+    case -1:                            \
+        if (COROUTINE_CONTEXT.looping)  \
             break;				
 
-#define END_COROUTINE                          \
-    default:                                   \
-        _NOP();                                \
-    }                                          \
-    coroutine.terminated = !coroutine.looping; \
+#define END_COROUTINE                                           \
+    default:                                                    \
+        _NOP();                                                 \
+    }                                                           \
+    COROUTINE_CONTEXT.terminated = !COROUTINE_CONTEXT.looping;  \
     return;
     
 // --
