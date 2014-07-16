@@ -18,7 +18,7 @@
   A simple coroutine is declared like this :
 
     // flashes a LED attached to analog pin 5 for 100ms
-    void flashOnce(Coroutine& coroutine)
+    void flashOnce(COROUTINE_CONTEXT(coroutine))
     {
         BEGIN_COROUTINE;
 
@@ -37,10 +37,15 @@
   records the state of the coroutine so it can be resumed later. The BEGIN and END
   macros do the rest required for this to work.
 
+  The COROUTINE_CONTEXT() macro defines the name of the context argument to the
+  coroutine, which has the type Coroutine& (a reference type). You may not use a
+  regular parameter definition, since the coroutine needs to know the name you choose
+  for it, and using this macro was the most straightforward way.
+
   You may also use "coroutine locals", which are variables local to the coroutine
   and whose state will be preserved after a yield and recovered when resuming :
 
-    void flashThrice(Coroutine& coroutine)
+    void flashThrice(COROUTINE_CONTEXT(coroutine))
     {
         COROUTINE_LOCAL(int, i);
 
@@ -73,7 +78,7 @@
 
   Coroutines may also loop instead of evaluate once, using the loop() function :
 
-    void flashForever(Coroutine& coroutine)
+    void flashForever(COROUTINE_CONTEXT(coroutine))
     {
         BEGIN_COROUTINE;
 
@@ -94,19 +99,6 @@
 
   If the loop() function is not called in one of its iterations, the loop stops and
   the coroutine will end its execution normally.
-
-  The default name of the coroutine by-reference context parameter is "coroutine",
-  but it is possible to override it by redefining the COROTUTINE_CONTEXT macro :
-
-    #undef COROUTINE_CONTEXT
-    #define COROUTINE_CONTEXT myContext
-    
-    void flashForever(Coroutine& myContext)
-    {
-        ...
-
-  The redefinition can be done before including the header file, or anywhere before
-  defining a coroutine function, as well as in between two functions.
 
   There are some preconditions that the sketch must meet to use coroutines :
   1. Declare a Coroutines<N> object, where N is the number of preallocated coroutines
@@ -144,7 +136,7 @@
   To let a coroutine clean up after an external termination, you can use the
   COROUTINE_FINALLY macro like this :
 
-    void finallyExample(Coroutine& coroutine)
+    void finallyExample(COROUTINE_CONTEXT(coroutine))
     {
         BEGIN_COROUTINE;
 
@@ -187,8 +179,6 @@
 #ifndef COROUTINES_H
 #define COROUTINES_H
 
-#include "Arduino.h"
-
 // debugging macros, null operations unless defined prior to including this .h
 // trace is a redirect to printf
 #ifndef trace
@@ -203,50 +193,65 @@
 #define P(string_literal)
 #endif
 
-#ifndef COROUTINE_CONTEXT
-#define COROUTINE_CONTEXT coroutine
+// some Arduino.h functions are defined if needed
+#ifndef bitRead
+#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
+#endif
+#ifndef bitSet
+#define bitSet(value, bit) ((value) |= (1UL << (bit)))
+#endif
+#ifndef bitClear
+#define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
 #endif
 
-#define COROUTINE_LOCAL(type, name)                                                                \
-    byte COROUTINE_localIndex = 0;                                                                 \
-    if (COROUTINE_CONTEXT.jumpLocation == 0 && !COROUTINE_CONTEXT.looping)                         \
-    {                                                                                              \
-        assert(COROUTINE_CONTEXT.numSavedLocals >= Coroutine::MaxLocals,                           \
-               P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));                   \
-        trace(P("Allocating local '" #name "' (#%hhu)"), COROUTINE_CONTEXT.numSavedLocals);        \
-        COROUTINE_localIndex = COROUTINE_CONTEXT.numSavedLocals;                                   \
-        COROUTINE_CONTEXT.savedLocals[COROUTINE_CONTEXT.numSavedLocals++] = malloc(sizeof(type));  \
-    }                                                                                              \
-    else                                                                                           \
-        COROUTINE_localIndex = COROUTINE_CONTEXT.numRecoveredLocals++;                             \
-    type& name = *((type*) COROUTINE_CONTEXT.savedLocals[COROUTINE_localIndex]);
+#define COROUTINE_CONTEXT(coroutine)       \
+Coroutine& coroutine)                      \
+{                                          \
+    Coroutine& COROUTINE_ctx = coroutine;  \
+    (void) coroutine;                      \
+	if (true
 
-#define BEGIN_COROUTINE                                                     \
-    trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),                   \
-          COROUTINE_CONTEXT.id, __func__, COROUTINE_CONTEXT.sinceStarted);  \
-    COROUTINE_CONTEXT.looping = false;                                      \
-    switch (COROUTINE_CONTEXT.jumpLocation)                                 \
-    {                                                                       \
+#define COROUTINE_LOCAL(type, name)                                                        \
+    byte COROUTINE_localIndex = 0;                                                         \
+    if (COROUTINE_ctx.jumpLocation == 0 && !COROUTINE_ctx.looping)                         \
+    {                                                                                      \
+        assert(COROUTINE_ctx.numSavedLocals >= Coroutine::MaxLocals,                       \
+               P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));           \
+        trace(P("Allocating local '" #name "' (#%hhu)"), COROUTINE_ctx.numSavedLocals);    \
+        COROUTINE_localIndex = COROUTINE_ctx.numSavedLocals;                               \
+        COROUTINE_ctx.savedLocals[COROUTINE_ctx.numSavedLocals++] = malloc(sizeof(type));  \
+    }                                                                                      \
+    else                                                                                   \
+        COROUTINE_localIndex = COROUTINE_ctx.numRecoveredLocals++;                         \
+    type& name = *((type*) COROUTINE_ctx.savedLocals[COROUTINE_localIndex]);
+
+#define BEGIN_COROUTINE                                             \
+    trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),           \
+          COROUTINE_ctx.id, __func__, COROUTINE_ctx.sinceStarted);  \
+    COROUTINE_ctx.looping = false;                                  \
+    switch (COROUTINE_ctx.jumpLocation)                             \
+    {                                                               \
     case 0:										
 
-#define COROUTINE_YIELD                             \
-        COROUTINE_CONTEXT.jumpLocation = __LINE__;  \
-        COROUTINE_CONTEXT.numRecoveredLocals = 0;   \
-        trace(P("...yielding..."));                 \
-        return;                                     \
+#define COROUTINE_YIELD                         \
+        COROUTINE_ctx.jumpLocation = __LINE__;  \
+        COROUTINE_ctx.numRecoveredLocals = 0;   \
+        trace(P("...yielding..."));             \
+        return;                                 \
     case __LINE__:	
 
-#define COROUTINE_FINALLY               \
-    case -1:                            \
-        if (COROUTINE_CONTEXT.looping)  \
+#define COROUTINE_FINALLY           \
+    case -1:                        \
+        if (COROUTINE_ctx.looping)  \
             break;				
 
-#define END_COROUTINE                                           \
-    default:                                                    \
-        _NOP();                                                 \
-    }                                                           \
-    COROUTINE_CONTEXT.terminated = !COROUTINE_CONTEXT.looping;  \
-    return;
+#define END_COROUTINE                                   \
+    default:                                            \
+        _NOP();                                         \
+    }                                                   \
+    COROUTINE_ctx.terminated = !COROUTINE_ctx.looping;  \
+    return;                                             \
+}
     
 // --
 

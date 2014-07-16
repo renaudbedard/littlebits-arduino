@@ -43,7 +43,7 @@ void setup()
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 // plays a short bleep when the note buffer is cleared by a long press
-void notifyClear(Coroutine& coroutine)
+void notifyClear(COROUTINE_CONTEXT(coroutine))
 {
 	BEGIN_COROUTINE;
 
@@ -56,11 +56,8 @@ void notifyClear(Coroutine& coroutine)
 	END_COROUTINE;
 }
 
-#undef COROUTINE_CONTEXT
-#define COROUTINE_CONTEXT c
-
 // previews the last played note
-void preview(Coroutine& c)
+void preview(COROUTINE_CONTEXT(c))
 {
 	BEGIN_COROUTINE;
 
@@ -90,10 +87,7 @@ void preview(Coroutine& c)
 	END_COROUTINE;
 }
 
-#undef COROUTINE_CONTEXT
-#define COROUTINE_CONTEXT coroutine
-
-void play(Coroutine& coroutine)
+void play(COROUTINE_CONTEXT(coroutine))
 {
 	// used for local iteration, saved & recovered when yielding
 	COROUTINE_LOCAL(byte, i);
