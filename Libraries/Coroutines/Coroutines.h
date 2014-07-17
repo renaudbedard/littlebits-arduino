@@ -1,7 +1,8 @@
 /*
   Coroutines.h - Library providing a simple coroutine system.
-  Created by Renaud Bédard, July 18th, 2014.
+  Created by Renaud Bédard with code review help by Bryan McConkey and zerozshadow, July 18th, 2014.
   Released into the public domain.
+  Version 1.0.
 
   The variant of coroutines proposed in this library are inspired by Unity coroutines
   http://docs.unity3d.com/ScriptReference/Coroutine.html
@@ -181,6 +182,8 @@
 
 // The Arduino header is primarily required for use of the millis() function
 #include "Arduino.h"
+
+#define COROUTINES_VERSION 1.0
 
 // Debugging macros, null operations unless defined prior to including this .h
 // trace is a redirect to printf
