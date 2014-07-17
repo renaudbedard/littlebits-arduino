@@ -1,10 +1,10 @@
-# Coroutines Library
+# C Coroutines Library for Arduino
 
 Created by Renaud Bédard, with code review help by Bryan McConkey and zerozshadow.
-v1.0 : July 18th, 2014.
-Released into the public domain.
 
-## Description
+Version 1.0 released on July 18th, 2014 into the public domain.
+
+## Overview
 
 *The variant of coroutines proposed in this library are inspired by Unity coroutines : http://docs.unity3d.com/ScriptReference/Coroutine.html*
 
@@ -35,8 +35,27 @@ Here, the `wait` call adds 100ms to the timer that will prevent the coroutine fr
 
 The `COROUTINE_CONTEXT()` macro defines the name of the context argument to the coroutine, which has the type `Coroutine&` (a reference type). You may not use a regular parameter definition, since the coroutine needs to know the name you choose for it, and using this macro was the most straightforward way.
 
-You may also use _coroutine locals_, which are variables local to the coroutine and whose state will be preserved after a yield and recovered when resuming :
+There are some preconditions that the Arduino sketch must meet to use coroutines :
+1. Declare a `Coroutines<N>` object, where `N` is the number of preallocated coroutines required; in other words, the number of coroutines you expect your program to "concurrently" run.
+2. In your sketch's `loop()` function, call the `update()` function on that `Coroutines<N>` object.
 
+Declared coroutines will not be started automatically. The sketch needs to start them with a function call :
+
+```
+// where "coroutines" is a Coroutine<N> instance,
+// and "flashOnce" is the name of a declared coroutine
+coroutines.start(flashOnce);
+```
+
+This fires the coroutine, which will begin in the next update. The return type of the function must be void, and it must be defined with the `COROUTINE_CONTEXT()` macro as only parameter.
+
+## Other features
+
+### Coroutine Locals
+
+You may also use *coroutine locals*, which are variables local to the coroutine and whose state will be preserved after a yield and recovered when resuming :
+
+```
 void flashThrice(COROUTINE_CONTEXT(coroutine))
 {
     COROUTINE_LOCAL(int, i);
@@ -58,18 +77,21 @@ void flashThrice(COROUTINE_CONTEXT(coroutine))
 
     END_COROUTINE;
 }
+```
 
-Notice that the for(;;) loop does not declare "i" since it already has been.
-However, its value is undefined, like any other variable, until it's first set.
-Since it's declared as COROUTINE_LOCAL, after returning from the YIELD, its
-value will be restored to what it was prior to yielding.
-COROUTINE_LOCAL declarations must be done before BEGIN_COROUTINE.
-Coroutine locals live on the heap, so their size must be kept in check. Also,
-there is a maximum amount of them which defaults to 8, but can be tweaked in
-this header. (see Coroutine::MaxLocals)
+Notice that the `for(;;)` loop does not declare `i` since it already has been. However, its value is undefined, like any other variable, until it's first set. 
 
-Coroutines may also loop instead of evaluate once, using the loop() function :
+Since it's declared as `COROUTINE_LOCAL`, after returning from the `COROUTINE_YIELD`, its value will be restored to what it was prior to yielding.
 
+`COROUTINE_LOCAL` declarations must be done before `BEGIN_COROUTINE`.
+
+Coroutine locals live on the heap, so their size must be kept in check. Also, there is a maximum amount of them which defaults to 8, but can be tweaked in the header file. (see `CoroutineImpl::MaxLocals`)
+
+### Looping Coroutines
+
+Coroutines may also loop instead of evaluate once, using the `loop()` function :
+
+```
 void flashForever(COROUTINE_CONTEXT(coroutine))
 {
     BEGIN_COROUTINE;
@@ -88,35 +110,16 @@ void flashForever(COROUTINE_CONTEXT(coroutine))
 
     END_COROUTINE;
 }
+```
 
-If the loop() function is not called in one of its iterations, the loop stops and
-the coroutine will end its execution normally.
+If the `Coroutine::loop()` function is not called in one of its iterations, the loop stops and the coroutine will end its execution normally.
 
-There are some preconditions that the sketch must meet to use coroutines :
-1. Declare a Coroutines<N> object, where N is the number of preallocated coroutines
- required; in other words, the number of coroutines you expect your program to 
- "concurrently" run.
-2. In your loop() function, call the update() function on that Coroutines<N> object.
+### External Manipulation
 
-Declared coroutines will not be started automatically. The sketch needs to start
-them with a function call :
+You can keep a reference to the coroutine object via the return value of `Coroutines<N>::start()`, but since these objects are recycled, one must be careful to only use the reference while the coroutine it initially referred to is still alive. One way to do this would be to declare the coroutine reference as a pointer in the
+sketch's file-scope variables, and set it to `NULL` right before `COROUTINE_END`.
 
-// where "coroutines" is a Coroutine<N> instance,
-// and "flashOnce" is the name of a declared coroutine
-coroutines.start(flashOnce);
-
-This fires the coroutine, which will begin in the next update.
-The return type of the function must be void, and it must be defined with the
-COROUTINE_CONTEXT() macro as only parameter.
-
-You can keep a reference to the coroutine object via the return value of "start", 
-but since these objects are recycled, one must be careful to only use the reference
-while the coroutine it initially referred to is still alive.
-One way to do this would be to declare the coroutine reference as a pointer in the
-sketch's file-scope variables, and set it to NULL right before COROUTINE_END.
-
-If the sketch holds a reference or a pointer to a coroutine object, it can manipulate
-its execution from the outside using these functions :
+If the sketch holds a reference or a pointer to a `` object, it can manipulate its execution from the outside using these functions :
 
 - suspend() will prevent any subsequent update to the coroutine
 - resume() reverts a suspended coroutine and allows it to execute in the next update
