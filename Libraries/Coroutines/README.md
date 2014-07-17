@@ -2,7 +2,7 @@
 
 Created by Renaud Bédard.
 
-Version 1.0 released on July 18th, 2014 into the public domain.
+Version 1.0 released on July 17th, 2014 into the public domain.
 
 ## Overview
 
@@ -46,7 +46,7 @@ Declared coroutines will not be started automatically. The sketch needs to start
 coroutines.start(flashOnce);
 ```
 
-This fires the coroutine, which will begin in the next update. The return type of the function must be void, and it must be defined with the `COROUTINE_CONTEXT()` macro as only parameter.
+This fires the coroutine, which will begin in the next update. The return type of the function must be `void`, and it must be defined with the `COROUTINE_CONTEXT()` macro as only parameter.
 
 ## Other features
 
@@ -126,7 +126,7 @@ If the sketch holds a reference or a pointer to a `Coroutine&` object, it can ma
 
 The `suspend()` function may also be called from within a coroutine, which blocks its execution until `resume()` is called on it from the sketch.
 
-### *Finally* Block
+### *finally* Block
 
 To let a coroutine clean up after an external termination, you can use the `COROUTINE_FINALLY` macro like this :
 
