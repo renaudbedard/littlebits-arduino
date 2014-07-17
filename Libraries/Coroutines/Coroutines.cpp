@@ -6,11 +6,9 @@
   See header file for full documentation.
 */
 
-
 #include "Coroutines.h"
-#include "Arduino.h"
 
-bool Coroutine::update(unsigned long millis)
+bool CoroutineImpl::update(unsigned long millis)
 {
 	if (suspended)
 		return false;
@@ -25,7 +23,7 @@ bool Coroutine::update(unsigned long millis)
 	return false;
 }
 
-void Coroutine::reset()
+void CoroutineImpl::reset()
 {
 	barrierTime = 0;
 	sinceStarted = 0;
@@ -41,12 +39,12 @@ void Coroutine::reset()
 	looping = false;
 }
 
-void Coroutine::wait(unsigned long time)
+void CoroutineImpl::wait(unsigned long time)
 {
 	barrierTime = millis() + time;
 }
 
-void Coroutine::terminate()
+void CoroutineImpl::terminate()
 {
 	terminated = true;
 	suspended = false;
@@ -55,7 +53,7 @@ void Coroutine::terminate()
 	barrierTime = 0;
 }
 
-void Coroutine::suspend()
+void CoroutineImpl::suspend()
 {
 	if (!suspended && !terminated)
 	{
@@ -64,7 +62,7 @@ void Coroutine::suspend()
 	}
 }
 
-void Coroutine::resume() 
+void CoroutineImpl::resume() 
 {
 	if (suspended && !terminated)
 	{
@@ -73,10 +71,21 @@ void Coroutine::resume()
 	}
 }
 
-void Coroutine::loop() 
+void CoroutineImpl::loop() 
 {
 	jumpLocation = 0;
 	numRecoveredLocals = 0;
 	looping = true;
 	trace(P("...looping..."));
+}
+
+
+bool CoroutineImpl::isTerminated() const
+{
+	return terminated;
+}
+
+bool CoroutineImpl::isSuspended() const
+{
+	return suspended;
 }

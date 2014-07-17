@@ -138,7 +138,7 @@ void loop()
 		trace(mode == Playback ? P("\n** Playback mode **\n") : P("\n** Record mode **\n"));
 		lastMode = mode;
 
-		if (mode == Record && playCoroutine != NULL && !playCoroutine->terminated)
+		if (mode == Record && playCoroutine != NULL && !playCoroutine->isTerminated())
 		{
 			// terminate playback coroutine when switching to recording mode
 			playCoroutine->terminate();
@@ -148,7 +148,7 @@ void loop()
 		if (mode == Playback)
 		{
 			// terminate preview coroutine (if any active) when switching to playback
-			if (previewCoroutine != NULL && !previewCoroutine->terminated)
+			if (previewCoroutine != NULL && !previewCoroutine->isTerminated())
 			{
 				previewCoroutine->terminate();
 				previewCoroutine = NULL;
@@ -186,7 +186,7 @@ void loop()
 				trace(P("Recorded note %hhu : %i"), recordedNotes, keyboardValue);
 				notes[recordedNotes++] = keyboardValue;
 
-				if (previewCoroutine != NULL && !previewCoroutine->terminated)
+				if (previewCoroutine != NULL && !previewCoroutine->isTerminated())
 				{
 					needsReset = true;
 					trace(P("Interrupted preview (coroutine #%hhu)"), previewCoroutine->id);
@@ -209,7 +209,7 @@ void loop()
 	{
 		// for each value change, wake up the playback coroutine
 		bool thisPulse = digitalRead(In::Digital::Pulse) == HIGH;
-		if ((thisPulse != lastPulse) && playCoroutine->suspended)
+		if ((thisPulse != lastPulse) && playCoroutine->isSuspended())
 			playCoroutine->resume();
 		lastPulse = thisPulse;
 	}

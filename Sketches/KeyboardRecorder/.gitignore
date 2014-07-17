@@ -3,3 +3,6 @@
 *.vcxproj.user
 *.opensdf
 /ipch/
+/Visual Micro/
+/Release/
+/Debug/

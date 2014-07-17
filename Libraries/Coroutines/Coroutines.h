@@ -1,6 +1,6 @@
 /*
   Coroutines.h - Library providing a simple coroutine system.
-  Created by Renaud Bédard, July 14th, 2014.
+  Created by Renaud Bédard, July 18th, 2014.
   Released into the public domain.
 
   The variant of coroutines proposed in this library are inspired by Unity coroutines
@@ -102,7 +102,7 @@
 
   There are some preconditions that the sketch must meet to use coroutines :
   1. Declare a Coroutines<N> object, where N is the number of preallocated coroutines
-     required. In other words, the number of coroutines you expect your program to 
+     required; in other words, the number of coroutines you expect your program to 
      "concurrently" run.
   2. In your loop() function, call the update() function on that Coroutines<N> object.
   
@@ -114,8 +114,8 @@
     coroutines.start(flashOnce);
 
   This fires the coroutine, which will begin in the next update.
-  The return type of the function must be void, and it must take a Coroutine object
-  by reference (Coroutine&).
+  The return type of the function must be void, and it must be defined with the
+  COROUTINE_CONTEXT() macro as only parameter.
 
   You can keep a reference to the coroutine object via the return value of "start", 
   but since these objects are recycled, one must be careful to only use the reference
@@ -179,7 +179,10 @@
 #ifndef COROUTINES_H
 #define COROUTINES_H
 
-// debugging macros, null operations unless defined prior to including this .h
+// The Arduino header is primarily required for use of the millis() function
+#include "Arduino.h"
+
+// Debugging macros, null operations unless defined prior to including this .h
 // trace is a redirect to printf
 #ifndef trace
 #define trace(...)
@@ -193,29 +196,20 @@
 #define P(string_literal)
 #endif
 
-// some Arduino.h functions are defined if needed
-#ifndef bitRead
-#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
-#endif
-#ifndef bitSet
-#define bitSet(value, bit) ((value) |= (1UL << (bit)))
-#endif
-#ifndef bitClear
-#define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
-#endif
+// See documentation at top of file for usage of the COROUTINE macros
 
-#define COROUTINE_CONTEXT(coroutine)       \
-Coroutine& coroutine)                      \
-{                                          \
-    Coroutine& COROUTINE_ctx = coroutine;  \
-    (void) coroutine;                      \
-	if (true
+#define COROUTINE_CONTEXT(coroutine)                            \
+Coroutine& coroutine)                                           \
+{                                                               \
+    CoroutineImpl& COROUTINE_ctx = (CoroutineImpl&) coroutine;  \
+    (void) coroutine;                                           \
+    if (true
 
 #define COROUTINE_LOCAL(type, name)                                                        \
     byte COROUTINE_localIndex = 0;                                                         \
     if (COROUTINE_ctx.jumpLocation == 0 && !COROUTINE_ctx.looping)                         \
     {                                                                                      \
-        assert(COROUTINE_ctx.numSavedLocals >= Coroutine::MaxLocals,                       \
+        assert(COROUTINE_ctx.numSavedLocals >= CoroutineImpl::MaxLocals,                   \
                P("Ran out of coroutine locals! Increase Coroutine::MaxLocals"));           \
         trace(P("Allocating local '" #name "' (#%hhu)"), COROUTINE_ctx.numSavedLocals);    \
         COROUTINE_localIndex = COROUTINE_ctx.numSavedLocals;                               \
@@ -253,27 +247,49 @@ Coroutine& coroutine)                      \
     return;                                             \
 }
     
-// --
-
-class Coroutine;
-typedef void (*CoroutineBody)(Coroutine&);
-
-// --
-
+// Coroutine context object
+// Provides functions for manipulating the execution of coroutines from within
+// a coroutine or from the sketch.
 class Coroutine
 {
 public:
+	// Sets the time in milliseconds to wait before the coroutine can come back from a yield
+    virtual void wait(unsigned long millis) = 0;
+	// Stops the coroutine on its next update
+    virtual void terminate() = 0;
+	// Suspends the coroutine indefinitely starting from the next update, pausing its execution
+    virtual void suspend() = 0;
+	// Resumes a suspended coroutine, allowing it to update and continue executing
+    virtual void resume() = 0;
+	// Makes the coroutine loop back to the beginning instead of terminating when reaching END_COROUTINE
+    virtual void loop() = 0;
+
+	// returns true if the coroutine is terminated (false if it is active)
+    virtual bool isTerminated() const = 0;
+	// returns true if the coroutine is suspended
+    virtual bool isSuspended() const = 0;
+};
+
+// Delegate type of coroutine functions
+typedef void (*CoroutineBody)(Coroutine&);
+
+// Internal class for coroutines, which implements the public abstract one
+class CoroutineImpl : public Coroutine
+{
+public:
+	// Maximum number of coroutine locals, increase/decrease if needed
     const static byte MaxLocals = 8;
 
     CoroutineBody function;
     unsigned long barrierTime, sinceStarted, startedAt, suspendedAt;
-
     byte id;
     bool terminated, suspended, looping;
     long jumpLocation;
+	// Coroutine locals are heap-allocated on demand and freed on reset
     void* savedLocals[MaxLocals];
     byte numSavedLocals, numRecoveredLocals;
 
+	// Resets the coroutine's state, used when recycling coroutine objects
     void reset();
     bool update(unsigned long millis);
 
@@ -282,51 +298,72 @@ public:
     void suspend();
     void resume();
     void loop();
+
+    bool isTerminated() const;
+    bool isSuspended() const;
+    bool isActive() const;
 };
 
-// --
-
+// Coroutines manager class
+// The N template argument determines how many coroutines are allocated, which is to say
+// how many coroutines can be active at once. Since an 32-bit mask is used to track active
+// coroutines, the maximum value for N is 32, not 255.
 template <byte N>
 class Coroutines
 {
 private:
-    Coroutine coroutines[N];
-    unsigned int activeMask;
+	// The coroutine context objects
+    CoroutineImpl coroutines[N];
+	// bitmask tracking the number of active coroutines
+    unsigned long activeMask;
+	// The count of active coroutines
     byte activeCount;
 
 public:
     Coroutines();
 
+	// Starts a coroutine
+	// The function parameter is the name of the coroutine's function.
+	// The coroutine's context object is returned by reference so it can be manipulated from the sketch.
     Coroutine& start(CoroutineBody function);
+	// Updates the active coroutines.
+	// Use this overload if you already have called millis() in your loop function and kept the value.
     void update(unsigned long millis);
+	// Updates the active coroutines.
+	// This overload will call millis() by itself.
     void update();
 };
 
-// --
+// Implementation of the Coroutines<N> functions.
+// Since it's a template class, implementation needs to be in the header file...
 
 template <byte N>
 Coroutines<N>::Coroutines() :
     activeMask(0),
     activeCount(0)
 {
-    for (byte i=0; i<N; i++)
+	// ids are assigned sequentially and never change
+    for (byte i = 0; i < N; i++)
         coroutines[i].id = i;
 }
 
 template <byte N>
 Coroutine& Coroutines<N>::start(CoroutineBody function)
 {
-    for (byte i = 0; i < min(N, sizeof(unsigned int)); i++)
+    for (byte i = 0; i < min(N, sizeof(unsigned long)); i++)
+		// take the first inactive slot
         if (!bitRead(activeMask, i))
         {
+			// mark as active
             bitSet(activeMask, i);
             activeCount++;
 
-            // initialize
             trace(P("Adding coroutine #%hhu"), i);
-            Coroutine& coroutine = coroutines[i];
+            CoroutineImpl& coroutine = coroutines[i];
+			// reset state of the context object on start
             coroutine.reset();
             coroutine.function = function;
+			// remember the time it starts at
             coroutine.startedAt = millis();
 
             return coroutine;
@@ -334,36 +371,36 @@ Coroutine& Coroutines<N>::start(CoroutineBody function)
 
     // out of coroutines!
     assert(false, P("Out of allocated coroutines!"));
-    abort();
+    abort(); // to avoid compile warning
 }
 
 template <byte N>
 void Coroutines<N>::update(unsigned long millis)
 {
-    int bit = 0;
+    int b = 0;
     int removed = 0;
     for (int i = 0; i < activeCount; i++)
     {
-        while (!bitRead(activeMask, bit))
+        while (!bitRead(activeMask, b))
         {
-            bit++;
-            if (bit == N) bit = 0;
+            b++;
+            if (b == N) b = 0;
         }
 
-        assert(bit >= N, P("Couldn't find active coroutine!"));
+        assert(b >= N, P("Couldn't find active coroutine!"));
 
-        Coroutine& coroutine = coroutines[bit];
+        CoroutineImpl& coroutine = coroutines[b];
         bool result = coroutine.update(millis);
         if (result)
         {
             // remove coroutine
-            trace(P("Removing coroutine #%hhu"), bit);
-            bitClear(activeMask, bit);
+            trace(P("Removing coroutine #%hhu"), b);
+            bitClear(activeMask, b);
             coroutine.terminated = true;
             removed++;
         }
 
-        bit++;
+        b++;
     }
 
     activeCount -= removed;
