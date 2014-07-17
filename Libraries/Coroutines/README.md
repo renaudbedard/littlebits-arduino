@@ -6,7 +6,7 @@ Released into the public domain.
 
 ## Description
 
-_ The variant of coroutines proposed in this library are inspired by Unity coroutines : http://docs.unity3d.com/ScriptReference/Coroutine.html _
+*The variant of coroutines proposed in this library are inspired by Unity coroutines : http://docs.unity3d.com/ScriptReference/Coroutine.html*
 
 The basic idea is to be able to create blocks of code that execute sequentially, but can choose to stop temporarily and resume later. This is similar to threads, but in the case of coroutines, they never get pre-empted and will only give away focus if they explicitely yield.
 
