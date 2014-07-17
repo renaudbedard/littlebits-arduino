@@ -1,6 +1,6 @@
 # C Coroutines Library for Arduino
 
-Created by Renaud Bédard, with code review help by Bryan McConkey and zerozshadow.
+Created by Renaud Bédard.
 
 Version 1.0 released on July 18th, 2014 into the public domain.
 
@@ -119,18 +119,19 @@ If the `Coroutine::loop()` function is not called in one of its iterations, the 
 You can keep a reference to the coroutine object via the return value of `Coroutines<N>::start()`, but since these objects are recycled, one must be careful to only use the reference while the coroutine it initially referred to is still alive. One way to do this would be to declare the coroutine reference as a pointer in the
 sketch's file-scope variables, and set it to `NULL` right before `COROUTINE_END`.
 
-If the sketch holds a reference or a pointer to a `` object, it can manipulate its execution from the outside using these functions :
+If the sketch holds a reference or a pointer to a `Coroutine&` object, it can manipulate its execution from the outside using these functions :
 
-- suspend() will prevent any subsequent update to the coroutine
-- resume() reverts a suspended coroutine and allows it to execute in the next update
-- terminate() makes the coroutine prematurely exit in the next update
+- `suspend()` will prevent any subsequent update to the coroutine
+- `resume()` reverts a suspended coroutine and allows it to execute in the next update
+- `terminate()` makes the coroutine prematurely exit in the next update
 
-The suspend() function may also be called from within a coroutine, which blocks
-its execution until resume() is called on it from the sketch.
+The `suspend()` function may also be called from within a coroutine, which blocks its execution until `resume()` is called on it from the sketch.
 
-To let a coroutine clean up after an external termination, you can use the
-COROUTINE_FINALLY macro like this :
+### *Finally* Block
 
+To let a coroutine clean up after an external termination, you can use the `COROUTINE_FINALLY` macro like this :
+
+```
 void finallyExample(COROUTINE_CONTEXT(coroutine))
 {
     BEGIN_COROUTINE;
@@ -147,25 +148,27 @@ void finallyExample(COROUTINE_CONTEXT(coroutine))
 
     END_COROUTINE;
 }
+```
 
-In this example, the "Exiting..." string will be printed whether the coroutine
-is externally terminated or if it finished execution normally, after waiting 1000ms.
-The "Waited 1000ms" string however will only be printed if the coroutine stays
-alive for more than 1000ms.
-If used, the COROUTINE_FINALLY block must be placed before END_COROUTINE.
+In this example, the "Exiting..." string will be printed whether the coroutine is externally terminated or if it finished execution normally, after waiting 1000ms. The "Waited 1000ms" string however will only be printed if the coroutine stays alive for more than 1000ms.
 
-There is currently no way to return something from a coroutine or to pass a parameter
-to a coroutine. However, they have access to the sketch's file-scope variables,
+If used, the `COROUTINE_FINALLY` block must be placed before `END_COROUTINE`.
+
+## Limitations
+
+There is currently no way to return something from a coroutine or to pass a parameter to a coroutine. However, they have access to the sketch's file-scope variables,
 which can be used for input and/or output.
 
-The library comes with debug-logging ability, which can be enabled by defining
-three macros :
+## Logging
 
-- trace(...)
-- assert(condition, ...)
-- P(string_literal)
+The library comes with debug-logging ability, which can be enabled by defining three macros :
 
-See their default definition below for how they need to be implemented.
+- `trace(...)` is a redirect to `printf_p(...)` (or `printf(...)` if `P` does not go through `PSTR`)
+- `assert(condition, ...)` should be defined as `while(cond) { trace(__VA_ARGS__); }`. Do not use `<assert>`'s implementation, it will make it very hard to debug issues! (Arduinos stop communicating entirely after an assertion fails)
+- `P(string_literal)` is a shortcut to `PSTR` (if you want to hold strings in program memory) with a `\n` appended at the end
 
-This coroutine implementation is based on Simon Tatham's
-http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
+## Acknowledgements
+
+This coroutine implementation is based on Simon Tatham's : http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
+
+Thanks to Bryan McConkey and zerozshadow for sanity checking and suggestions, and to @yuriks on Twitter for pointing me to Simon Tatham's article. (plus a whole bunch of lovely twitter followers for your interest and comments!)
