@@ -6,11 +6,9 @@ Version 1.0 released on July 18th, 2014 into the public domain.
 
 ## Overview
 
-*The variant of coroutines proposed in this library are inspired by Unity coroutines : http://docs.unity3d.com/ScriptReference/Coroutine.html*
-
 The basic idea is to be able to create blocks of code that execute sequentially, but can choose to stop temporarily and resume later. This is similar to threads, but in the case of coroutines, they never get pre-empted and will only give away focus if they explicitely yield.
 
-The library provides a coroutine manager that pre-allocates and updates coroutines, as well as provides wait, suspend and resume constructs to make their usage more convenient.
+The library provides a coroutine manager (the `Coroutines<N>` class) that pre-allocates and updates coroutines, as well as provides wait, suspend and resume constructs to make their usage more convenient.
 
 A simple coroutine is declared like this :
 
@@ -33,9 +31,10 @@ void flashOnce(COROUTINE_CONTEXT(coroutine))
 
 Here, the `wait` call adds 100ms to the timer that will prevent the coroutine from resuming on the next update. The `COROUTINE_YIELD` macro exits the function, and records the state of the coroutine so it can be resumed later. The `BEGIN_COROUTINE` and `END_COROUTINE` macros do the rest required for this to work.
 
-The `COROUTINE_CONTEXT()` macro defines the name of the context argument to the coroutine, which has the type `Coroutine&` (a reference type). You may not use a regular parameter definition, since the coroutine needs to know the name you choose for it, and using this macro was the most straightforward way.
+The `COROUTINE_CONTEXT()` macro defines the name of the context argument to the coroutine, which has the hidden type `Coroutine&` (a reference type). You may not use a regular parameter definition, since the coroutine needs to know the name you choose for it, and using this macro was the most straightforward way.
 
 There are some preconditions that the Arduino sketch must meet to use coroutines :
+
 1. Declare a `Coroutines<N>` object, where `N` is the number of preallocated coroutines required; in other words, the number of coroutines you expect your program to "concurrently" run.
 2. In your sketch's `loop()` function, call the `update()` function on that `Coroutines<N>` object.
 
@@ -164,11 +163,13 @@ which can be used for input and/or output.
 The library comes with debug-logging ability, which can be enabled by defining three macros :
 
 - `trace(...)` is a redirect to `printf_p(...)` (or `printf(...)` if `P` does not go through `PSTR`)
-- `assert(condition, ...)` should be defined as `while(cond) { trace(__VA_ARGS__); }`. Do not use `<assert>`'s implementation, it will make it very hard to debug issues! (Arduinos stop communicating entirely after an assertion fails)
+- `assert(condition, ...)` should be defined as `while(cond) { trace(__VA_ARGS__); }`. Do not use the `<assert.h>` implementation from AVR Libc, it will make it very hard to debug issues! (Arduinos stop communicating entirely after an assertion fails)
 - `P(string_literal)` is a shortcut to `PSTR` (if you want to hold strings in program memory) with a `\n` appended at the end
 
 ## Acknowledgements
 
 This coroutine implementation is based on Simon Tatham's : http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
+
+...and is very much inspired by Unity's coroutines : http://docs.unity3d.com/ScriptReference/Coroutine.html
 
 Thanks to Bryan McConkey and zerozshadow for sanity checking and suggestions, and to @yuriks on Twitter for pointing me to Simon Tatham's article. (plus a whole bunch of lovely twitter followers for your interest and comments!)
