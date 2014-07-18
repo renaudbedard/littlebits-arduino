@@ -244,7 +244,7 @@ Coroutine& coroutine)                                           \
 
 #define END_COROUTINE                                   \
     default:                                            \
-        _NOP();                                         \
+        {}                                              \
     }                                                   \
     COROUTINE_ctx.terminated = !COROUTINE_ctx.looping;  \
     return;                                             \
