@@ -186,7 +186,7 @@
 #define COROUTINES_VERSION 1.0
 
 // Debugging macros, null operations unless defined prior to including this .h
-// trace is a redirect to printf
+// trace is a redirect to printf or printf_P (if P() redirects to PSTR())
 #ifndef trace
 #define trace(...)
 #endif
@@ -194,7 +194,7 @@
 #ifndef assert
 #define assert(cond, ...)
 #endif
-// P is a shortcut to PSTR (or F, but PSTR plays better with printf) with a "\n" appended
+// P is a shortcut to PSTR if you used printf_P, and with a "\n" appended
 #ifndef P
 #define P(string_literal)
 #endif
