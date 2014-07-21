@@ -256,20 +256,20 @@ Coroutine& coroutine)                                           \
 class Coroutine
 {
 public:
-	// Sets the time in milliseconds to wait before the coroutine can come back from a yield
+    // Sets the time in milliseconds to wait before the coroutine can come back from a yield
     virtual void wait(unsigned long millis) = 0;
-	// Stops the coroutine on its next update
+    // Stops the coroutine on its next update
     virtual void terminate() = 0;
-	// Suspends the coroutine indefinitely starting from the next update, pausing its execution
+    // Suspends the coroutine indefinitely starting from the next update, pausing its execution
     virtual void suspend() = 0;
-	// Resumes a suspended coroutine, allowing it to update and continue executing
+    // Resumes a suspended coroutine, allowing it to update and continue executing
     virtual void resume() = 0;
-	// Makes the coroutine loop back to the beginning instead of terminating when reaching END_COROUTINE
+    // Makes the coroutine loop back to the beginning instead of terminating when reaching END_COROUTINE
     virtual void loop() = 0;
 
-	// returns true if the coroutine is terminated (false if it is active)
+    // returns true if the coroutine is terminated (false if it is active)
     virtual bool isTerminated() const = 0;
-	// returns true if the coroutine is suspended
+    // returns true if the coroutine is suspended
     virtual bool isSuspended() const = 0;
 };
 
@@ -280,7 +280,7 @@ typedef void (*CoroutineBody)(Coroutine&);
 class CoroutineImpl : public Coroutine
 {
 public:
-	// Maximum number of coroutine locals, increase/decrease if needed
+    // Maximum number of coroutine locals, increase/decrease if needed
     const static byte MaxLocals = 8;
 
     CoroutineBody function;
@@ -288,11 +288,11 @@ public:
     byte id;
     bool terminated, suspended, looping;
     long jumpLocation;
-	// Coroutine locals are heap-allocated on demand and freed on reset
+    // Coroutine locals are heap-allocated on demand and freed on reset
     void* savedLocals[MaxLocals];
     byte numSavedLocals, numRecoveredLocals;
 
-	// Resets the coroutine's state, used when recycling coroutine objects
+    // Resets the coroutine's state, used when recycling coroutine objects
     void reset();
     bool update(unsigned long millis);
 
@@ -315,25 +315,25 @@ template <byte N>
 class Coroutines
 {
 private:
-	// The coroutine context objects
+    // The coroutine context objects
     CoroutineImpl coroutines[N];
-	// bitmask tracking the number of active coroutines
+    // bitmask tracking the number of active coroutines
     unsigned long activeMask;
-	// The count of active coroutines
+    // The count of active coroutines
     byte activeCount;
 
 public:
     Coroutines();
 
-	// Starts a coroutine
-	// The function parameter is the name of the coroutine's function.
-	// The coroutine's context object is returned by reference so it can be manipulated from the sketch.
+    // Starts a coroutine
+    // The function parameter is the name of the coroutine's function.
+    // The coroutine's context object is returned by reference so it can be manipulated from the sketch.
     Coroutine& start(CoroutineBody function);
-	// Updates the active coroutines.
-	// Use this overload if you already have called millis() in your loop function and kept the value.
+    // Updates the active coroutines.
+    // Use this overload if you already have called millis() in your loop function and kept the value.
     void update(unsigned long millis);
-	// Updates the active coroutines.
-	// This overload will call millis() by itself.
+    // Updates the active coroutines.
+    // This overload will call millis() by itself.
     void update();
 };
 
@@ -345,7 +345,7 @@ Coroutines<N>::Coroutines() :
     activeMask(0),
     activeCount(0)
 {
-	// ids are assigned sequentially and never change
+    // ids are assigned sequentially and never change
     for (byte i = 0; i < N; i++)
         coroutines[i].id = i;
 }
@@ -354,19 +354,19 @@ template <byte N>
 Coroutine& Coroutines<N>::start(CoroutineBody function)
 {
     for (byte i = 0; i < min(N, sizeof(unsigned long)); i++)
-		// take the first inactive slot
+        // take the first inactive slot
         if (!bitRead(activeMask, i))
         {
-			// mark as active
+            // mark as active
             bitSet(activeMask, i);
             activeCount++;
 
             trace(P("Adding coroutine #%hhu"), i);
             CoroutineImpl& coroutine = coroutines[i];
-			// reset state of the context object on start
+            // reset state of the context object on start
             coroutine.reset();
             coroutine.function = function;
-			// remember the time it starts at
+            // remember the time it starts at
             coroutine.startedAt = millis();
 
             return coroutine;
