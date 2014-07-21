@@ -162,7 +162,7 @@ which can be used for input and/or output.
 
 The library comes with debug-logging ability, which can be enabled by defining three macros :
 
-- `trace(...)` is a redirect to `printf_p(...)` (or `printf(...)` if `P` does not go through `PSTR`)
+- `trace(...)` is a redirect to `printf_P(...)` (or `printf(...)` if `P` does not go through `PSTR`)
 - `assert(condition, ...)` should be defined as `while(cond) { trace(__VA_ARGS__); }`. Do not use the `<assert.h>` implementation from AVR Libc, it will make it very hard to debug issues! (Arduinos stop communicating entirely after an assertion fails)
 - `P(string_literal)` is a shortcut to `PSTR` (if you want to hold strings in program memory) with a `\n` appended at the end
 
