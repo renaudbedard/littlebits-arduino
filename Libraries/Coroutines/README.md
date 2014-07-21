@@ -121,7 +121,7 @@ sketch's file-scope variables, and set it to `NULL` right before `COROUTINE_END`
 If the sketch holds a reference or a pointer to a `Coroutine&` object, it can manipulate its execution from the outside using these functions :
 
 - `suspend()` will prevent any subsequent update to the coroutine
-- `resume()` reverts a suspended coroutine and allows it to execute in the next update
+- `resume()` activates a suspended coroutine and allows it to execute in the next update
 - `terminate()` makes the coroutine prematurely exit in the next update
 
 The `suspend()` function may also be called from within a coroutine, which blocks its execution until `resume()` is called on it from the sketch.
