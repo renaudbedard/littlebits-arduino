@@ -18,9 +18,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BleepDrum", "Sketches\Bleep
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MIDI", "Libraries\MIDI\MIDI.vcxproj", "{B3C118A5-CFBC-4F92-904F-48AD8FCEE1EA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UberLatch", "UberLatch\UberLatch.vcxproj", "{48B3DB65-39C7-4126-ADA9-6A0CC227C4FF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UberLatch", "Sketches\UberLatch\UberLatch.vcxproj", "{48B3DB65-39C7-4126-ADA9-6A0CC227C4FF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LFO", "LFO\LFO.vcxproj", "{6EB65546-44DB-4BB5-A73D-A89E4EE9BC81}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LFO", "Sketches\LFO\LFO.vcxproj", "{6EB65546-44DB-4BB5-A73D-A89E4EE9BC81}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
