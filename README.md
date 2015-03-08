@@ -9,4 +9,6 @@ Libraries :
 
 Sketches :
 
-(nothing worth talking about yet)
+- [LFO (Low Frequency Oscillator)](Sketches/LFO)
+- [Variable Duty Cycle for Square Oscillators](Sketches/DutyCycle)
+- [UberLatch (2x, 4x and 8x latch all in one)](Sketches/UberLatch)
