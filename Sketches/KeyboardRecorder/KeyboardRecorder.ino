@@ -1,7 +1,8 @@
 #include <Util.h>
 #include <EEPROM\EEPROM.h>
-#include "Pins.h"
 #include <Coroutines.h>
+
+#include "Pins.h"
 
 enum Mode {
 	None,
