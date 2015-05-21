@@ -14,6 +14,7 @@ class In
     class Analog
     {
     public:
+		static const byte DutyCycle = 0;
     };
 };
 

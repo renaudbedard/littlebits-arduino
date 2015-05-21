@@ -1,0 +1,3 @@
+﻿  Coroutines.cpp
+c1xx : warning C4117: macro name '__cplusplus' is reserved, '#define' ignored
+Coroutines.cpp : fatal error C1083: Cannot open include file: 'C:\Users\Renaud\Documents\Arduino\Coroutines\Visual Micro\.Coroutines.vsarduino.h': No such file or directory
