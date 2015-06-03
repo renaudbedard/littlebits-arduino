@@ -41,7 +41,7 @@ void setup()
 
 	sequencers[0].multiplier = 1;
 	sequencers[1].multiplier = 0.5f;
-	sequencers[2].multiplier = 0.125f;
+	sequencers[2].multiplier = 0.25f;
 
 	sequencers[0].pin = Out::Digital::Sequencer1;
 	sequencers[1].pin = Out::Digital::Sequencer2;
@@ -64,6 +64,22 @@ void refreshMultiplier()
 	if (lastMult != sequencers[0].multiplier)
 		printf("\nNew multiplier : %i\n", (int) sequencers[0].multiplier);
 #endif
+}
+
+void pulseSequencer(int i, unsigned long currentTime) 
+{
+	sequencers[i].lastSync = currentTime;
+
+	if (sequencers[i].multiplier >= 0.5)	sequencers[i].needsSync = 0;
+	else									sequencers[i].needsSync = (int) (-0.5f / sequencers[i].multiplier);
+
+	sequencers[i].state = !sequencers[i].state;
+	analogWrite(sequencers[i].pin, sequencers[i].state ? 255 : 0);
+#ifdef SERIAL_DEBUG
+	if (i == DEBUGGED_OUTPUT)
+		Serial.println(sequencers[i].state ? " [O]!" : " [.]!");
+#endif
+
 }
 
 void loop()
@@ -117,19 +133,7 @@ void loop()
 					}
 #endif
 					if (currentTime - sequencers[i].lastSync > MAXIMUM_DRIFT_MS)
-					{
-						sequencers[i].lastSync = currentTime;
-
-						if (sequencers[i].multiplier >= 0.5)	sequencers[i].needsSync = 0;
-						else									sequencers[i].needsSync = (int) (-0.5f / sequencers[i].multiplier);
-
-						sequencers[i].state = !sequencers[i].state;
-						analogWrite(sequencers[i].pin, sequencers[i].state ? 255 : 0);
-#ifdef SERIAL_DEBUG
-						if (i == DEBUGGED_OUTPUT)
-							Serial.println(sequencers[i].state ? " [O]!" : " [.]!");
-#endif
-					}
+						pulseSequencer(i, currentTime);
 				}
 			}
 		}
@@ -139,23 +143,6 @@ void loop()
 
 	// variable multiplication pulses
 	for (unsigned i=0; i<STATIC_ARRAY_SIZE(sequencers); i++)
-	{
 		if (currentTime >= sequencers[i].lastSync + pulseLength / (sequencers[i].multiplier * 2))
-		{
-			sequencers[i].lastSync = currentTime;
-
-			if (sequencers[i].multiplier >= 0.5)	sequencers[i].needsSync = 0;
-			else									sequencers[i].needsSync = (int) (-0.5f / sequencers[i].multiplier);
-
-			sequencers[i].state = !sequencers[i].state;
-			analogWrite(sequencers[i].pin, sequencers[i].state ? 255 : 0);
-
-#ifdef SERIAL_DEBUG
-			if (i == DEBUGGED_OUTPUT)
-				Serial.println(sequencers[i].state ? " [O]" : " [.]");
-#endif
-		}
-	}
-
-
+			pulseSequencer(i, currentTime);
 }
