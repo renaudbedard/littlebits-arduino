@@ -24,7 +24,9 @@ class Out
     class Digital
     {
     public:
-		static const byte VariableSpeed = 1;
+		static const byte Sequencer1 = 1;
+		static const byte Sequencer2 = 5;
+		static const byte Sequencer3 = 9;
     };
     class Analog
     {
