@@ -1,3 +1,6 @@
+#include <Util\Util.h>
+ADD_PRINTF_SUPPORT
+
 #include <MIDI\MIDI.h>
 #include "Pins.h"
 
@@ -48,6 +51,7 @@ unsigned long lastPulseLength;
 
 void setup()
 {
+	printf_setup();
 	MIDI.begin();
 }
 
@@ -55,7 +59,12 @@ void loop()
 {
 	unsigned long time = millis();
 
-	int pulse = digitalRead(In::Digital::Pulse);
+	MIDI.read();
+
+	if (MIDI.check())
+		printf("c : %u, d1 : %u, d2 : %u, s : %u", MIDI.getChannel(), MIDI.getData1(), MIDI.getData2());
+
+	/*int pulse = digitalRead(In::Digital::Pulse);
 
 	if (lastPulse == 0 && pulse != 0)
 	{
@@ -69,5 +78,5 @@ void loop()
 		// descending
 		lastPulseLength = (time - pulseStart) * 2;
 	}
-	lastPulse = pulse;
+	lastPulse = pulse;*/
 }

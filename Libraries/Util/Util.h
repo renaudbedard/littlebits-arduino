@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <avr/pgmspace.h>
 
+#define ulong unsigned long
+
 #define ADD_PRINTF_SUPPORT                                                  \
     static FILE uartout = {0};                                              \
     static int uart_putchar(char c, FILE* stream)                           \

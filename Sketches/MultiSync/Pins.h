@@ -1,4 +1,4 @@
-#include "Arduino.h"
+#include <stdint.h>
 
 #ifndef PINS_H
 #define PINS_H
