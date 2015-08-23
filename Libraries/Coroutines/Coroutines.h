@@ -220,7 +220,7 @@ Coroutine& coroutine)                                           \
     }                                                                                      \
     else                                                                                   \
         COROUTINE_localIndex = COROUTINE_ctx.numRecoveredLocals++;                         \
-    volatile type& name = *((type*) COROUTINE_ctx.savedLocals[COROUTINE_localIndex]);
+    type& name = *((type*) COROUTINE_ctx.savedLocals[COROUTINE_localIndex]);
 
 #define BEGIN_COROUTINE                                             \
     trace(P("Entering coroutine #%hhu ('%s') at %lu ms"),           \
