@@ -204,12 +204,13 @@
 #define COROUTINE_CONTEXT(coroutine)                            \
 Coroutine& coroutine)                                           \
 {                                                               \
+    byte COROUTINE_localIndex = 0;                              \
+    (void) COROUTINE_localIndex;				\
     CoroutineImpl& COROUTINE_ctx = (CoroutineImpl&) coroutine;  \
     (void) coroutine;                                           \
     if (true
 
 #define COROUTINE_LOCAL(type, name)                                                        \
-    byte COROUTINE_localIndex = 0;                                                         \
     if (COROUTINE_ctx.jumpLocation == 0 && !COROUTINE_ctx.looping)                         \
     {                                                                                      \
         assert(COROUTINE_ctx.numSavedLocals >= CoroutineImpl::MaxLocals,                   \
