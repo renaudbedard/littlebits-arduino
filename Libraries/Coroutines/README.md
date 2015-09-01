@@ -4,6 +4,18 @@ Created by Renaud Bédard.
 
 Version 1.0 released on July 17th, 2014 into the public domain.
 
+## Change log
+
+### 1.0 (2014-07-18)
+- Initial release
+
+### 1.1 (2015-08-31)
+- Fixes lock when using more than 3 coroutines
+- Switched to single header to prevent include order issues
+- Free allocated locals as soon as the coroutine terminates
+- Fixed erroneous debugging define documentation
+- Fixed error when declaring more than one coroutine local (thanks stuntgoat!)
+
 ## Overview
 
 The basic idea is to be able to create blocks of code that execute sequentially, but can choose to stop temporarily and resume later. This is similar to threads, but in the case of coroutines, they never get pre-empted and will only give away focus if they explicitely yield.
