@@ -69,9 +69,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Coroutines.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Coroutines.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

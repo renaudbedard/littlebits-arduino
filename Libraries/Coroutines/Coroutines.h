@@ -2,7 +2,7 @@
   Coroutines.h - Library providing a simple coroutine system.
   Created by Renaud Bédard with code review help by Bryan McConkey and zerozshadow, July 18th, 2014.
   Released into the public domain.
-  Version 1.0.
+  Version 1.1
 
   The variant of coroutines proposed in this library are inspired by Unity coroutines
   http://docs.unity3d.com/ScriptReference/Coroutine.html
@@ -175,6 +175,18 @@
 
   This coroutine implementation is based on Simon Tatham's
   http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
+
+  VERSION LOG
+  ===========
+  1.0 (2014-07-18)
+  - Initial release
+
+  1.1 (2015-08-31)
+  - Fixes lock when using more than 3 coroutines
+  - Switched to single header to prevent include order issues
+  - Free allocated locals as soon as the coroutine terminates
+  - Fixed erroneous debugging define documentation
+  - Fixed error when declaring more than one coroutine local (thanks stuntgoat!)
 */
 
 #ifndef COROUTINES_H
@@ -183,18 +195,19 @@
 // The Arduino header is primarily required for use of the millis() function
 #include "Arduino.h"
 
-#define COROUTINES_VERSION 1.0
+#define COROUTINES_VERSION 1.1
 
 // Debugging macros, null operations unless defined prior to including this .h
-// trace is a redirect to printf or printf_P (if P() redirects to PSTR())
+// trace should be : printf(__VA_ARGS__) 
+// or : printf_P(__VA_ARGS__) // if P is defined
 #ifndef trace
 #define trace(...)
 #endif
-// assert should be : while(cond) { trace(__VA_ARGS__); }
+// assert should be : while(!cond) { trace(__VA_ARGS__); }
 #ifndef assert
 #define assert(cond, ...)
 #endif
-// P is a shortcut to PSTR if you used printf_P, and with a "\n" appended
+// P should be : PSTR(string_literal "\n") // if you used printf_P in trace
 #ifndef P
 #define P(string_literal)
 #endif
@@ -205,7 +218,7 @@
 Coroutine& coroutine)                                           \
 {                                                               \
     byte COROUTINE_localIndex = 0;                              \
-    (void) COROUTINE_localIndex;				\
+    (void) COROUTINE_localIndex;                                \
     CoroutineImpl& COROUTINE_ctx = (CoroutineImpl&) coroutine;  \
     (void) coroutine;                                           \
     if (true
@@ -295,6 +308,9 @@ public:
 
     // Resets the coroutine's state, used when recycling coroutine objects
     void reset();
+    // frees coroutine locals when it's terminated
+    void freeLocals();
+
     bool update(unsigned long millis);
 
     void wait(unsigned long millis);
@@ -354,7 +370,7 @@ Coroutines<N>::Coroutines() :
 template <byte N>
 Coroutine& Coroutines<N>::start(CoroutineBody function)
 {
-    for (byte i = 0; i < min(N, sizeof(unsigned long)); i++)
+    for (byte i = 0; i < min(N, sizeof(unsigned long) * 8); i++)
         // take the first inactive slot
         if (!bitRead(activeMask, i))
         {
@@ -398,6 +414,7 @@ void Coroutines<N>::update(unsigned long millis)
         if (result)
         {
             // remove coroutine
+            coroutine.freeLocals();
             trace(P("Removing coroutine #%hhu"), b);
             bitClear(activeMask, b);
             coroutine.terminated = true;
@@ -414,6 +431,97 @@ template <byte N>
 void Coroutines<N>::update()
 {
     update(millis());
+}
+
+bool CoroutineImpl::update(unsigned long millis)
+{
+    if (suspended)
+        return false;
+
+    if (barrierTime <= millis)
+    {
+        sinceStarted = startedAt > millis ? 0 : millis - startedAt;
+        function(*this);
+        return terminated;
+    }
+
+    return false;
+}
+
+void CoroutineImpl::reset()
+{
+    barrierTime = 0;
+    sinceStarted = 0;
+    jumpLocation = 0;
+    terminated = suspended = false;
+    function = NULL;
+    numSavedLocals = 0;
+    numRecoveredLocals = 0;
+    terminated = false;
+    suspended = false;
+    looping = false;
+}
+
+void CoroutineImpl::wait(unsigned long time)
+{
+    barrierTime = millis() + time;
+}
+
+void CoroutineImpl::freeLocals() 
+{
+    if (numSavedLocals == 0) 
+        return;
+
+    trace(P("Freeing %hhu local(s)"), numSavedLocals);
+    for (int i=0; i<numSavedLocals; i++)
+        free(savedLocals[i]);
+    numSavedLocals = 0;
+}
+
+void CoroutineImpl::terminate()
+{
+    terminated = true;
+    suspended = false;
+    looping = false;
+    jumpLocation = -1;
+    barrierTime = 0;
+}
+
+void CoroutineImpl::suspend()
+{
+    if (!suspended && !terminated)
+    {
+        suspended = true;
+        suspendedAt = millis();
+    }
+}
+
+void CoroutineImpl::resume() 
+{
+    if (suspended && !terminated)
+    {
+        suspended = false;
+        startedAt += millis() - suspendedAt;
+    }
+}
+
+void CoroutineImpl::loop() 
+{
+    jumpLocation = 0;
+    numRecoveredLocals = 0;
+    looping = true;
+    trace(P("...looping..."));
+}
+
+
+bool CoroutineImpl::isTerminated() const
+{
+    return terminated;
+}
+
+bool CoroutineImpl::isSuspended() const
+{
+    return suspended;
 }
 
 #endif

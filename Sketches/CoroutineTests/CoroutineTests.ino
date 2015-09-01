@@ -16,22 +16,22 @@ void testLocals(COROUTINE_CONTEXT(coroutine))
     COROUTINE_LOCAL(int, i);
     BEGIN_COROUTINE;
 
-	trace("Start!\n");
+//	trace("Start!\n");
 
     for (i = 5; i < BLINK_LEN_COUNT; i += BLINK_LEN_INCR)
     {
-		trace("Part 1 for %i\n", i);
+//		trace("Part 1 for %i\n", i);
 		
         coroutine.wait(i);
         COROUTINE_YIELD;
 
-        trace("Part 2 for %i\n", i);
+//        trace("Part 2 for %i\n", i);
 
         coroutine.wait(i);
         COROUTINE_YIELD;
     }
 
-	trace("All done!\n");
+//	trace("All done!\n");
 
     END_COROUTINE;
 }

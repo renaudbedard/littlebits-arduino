@@ -28,7 +28,7 @@
 #ifdef _DEBUG
 
 #define assert(cond, ...)       \
-    while (cond)                \
+    while (!cond)               \
         printf_P(__VA_ARGS__);
 
 #define trace(...)              \
