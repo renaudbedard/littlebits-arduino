@@ -302,7 +302,7 @@ public:
     byte id;
     bool terminated, suspended, looping;
     long jumpLocation;
-    // Coroutine locals are heap-allocated on demand and freed on reset
+    // Coroutine locals are heap-allocated on demand and freed on termination
     void* savedLocals[MaxLocals];
     byte numSavedLocals, numRecoveredLocals;
 
