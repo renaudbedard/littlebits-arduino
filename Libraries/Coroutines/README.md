@@ -1,8 +1,7 @@
 # C Coroutines Library for Arduino
 
 Created by Renaud Bédard.
-
-Version 1.0 released on July 17th, 2014 into the public domain.
+Released into the public domain.
 
 ## Change log
 
