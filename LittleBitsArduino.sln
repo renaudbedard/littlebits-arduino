@@ -26,6 +26,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UberSync", "Sketches\UberSy
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiSync", "Sketches\MultiSync\MultiSync.vcxproj", "{B1DDD14E-7AF0-429B-98E9-91754B706826}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoroutineTests", "Sketches\CoroutineTests\CoroutineTests.vcxproj", "{F69A6622-E6C0-448C-A466-EF6F4984F1DB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{54BFF38A-225E-4D93-B7E4-4E2ED63D61A8} = {54BFF38A-225E-4D93-B7E4-4E2ED63D61A8}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -68,6 +73,10 @@ Global
 		{B1DDD14E-7AF0-429B-98E9-91754B706826}.Debug|Win32.Build.0 = Debug|Win32
 		{B1DDD14E-7AF0-429B-98E9-91754B706826}.Release|Win32.ActiveCfg = Release|Win32
 		{B1DDD14E-7AF0-429B-98E9-91754B706826}.Release|Win32.Build.0 = Release|Win32
+		{F69A6622-E6C0-448C-A466-EF6F4984F1DB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F69A6622-E6C0-448C-A466-EF6F4984F1DB}.Debug|Win32.Build.0 = Debug|Win32
+		{F69A6622-E6C0-448C-A466-EF6F4984F1DB}.Release|Win32.ActiveCfg = Release|Win32
+		{F69A6622-E6C0-448C-A466-EF6F4984F1DB}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,5 +91,6 @@ Global
 		{6EB65546-44DB-4BB5-A73D-A89E4EE9BC81} = {5070CC61-50F6-4568-BC88-10962D185ABB}
 		{6021C1CF-F3C9-4A2A-BEF1-9B59BA684E17} = {5070CC61-50F6-4568-BC88-10962D185ABB}
 		{B1DDD14E-7AF0-429B-98E9-91754B706826} = {5070CC61-50F6-4568-BC88-10962D185ABB}
+		{F69A6622-E6C0-448C-A466-EF6F4984F1DB} = {5070CC61-50F6-4568-BC88-10962D185ABB}
 	EndGlobalSection
 EndGlobal
