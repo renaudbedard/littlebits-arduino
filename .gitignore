@@ -20,3 +20,5 @@
 *.out
 *.app
 *.opensdf
+*.sdf
+*.suo
