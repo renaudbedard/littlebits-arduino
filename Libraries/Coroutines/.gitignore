@@ -1,3 +1,4 @@
 /Debug/
 /Visual Micro/
 /Release/
+*.vcxproj.user
