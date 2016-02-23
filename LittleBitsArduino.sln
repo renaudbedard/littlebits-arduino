@@ -25,6 +25,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UberSync", "Sketches\UberSync\UberSync.vcxproj", "{6021C1CF-F3C9-4A2A-BEF1-9B59BA684E17}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiSync", "Sketches\MultiSync\MultiSync.vcxproj", "{B1DDD14E-7AF0-429B-98E9-91754B706826}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6A17AB57-C114-4F80-A519-BFE238566DF4} = {6A17AB57-C114-4F80-A519-BFE238566DF4}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoroutineTests", "Sketches\CoroutineTests\CoroutineTests.vcxproj", "{F69A6622-E6C0-448C-A466-EF6F4984F1DB}"
 	ProjectSection(ProjectDependencies) = postProject

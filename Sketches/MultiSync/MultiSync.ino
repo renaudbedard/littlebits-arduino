@@ -17,10 +17,18 @@ ADD_PRINTF_SUPPORT
 
 static const int Multipliers[MULTIPLIER_COUNT] = { 1, 2, 3, 4, 6, 8 };
 
-struct SequencerState {
+enum PinState 
+{
+	On,
+	Off,
+	ScheduledOff
+};
+struct SequencerState 
+{
 	byte queueLength;
 	ulong queue[QUEUE_SIZE];
-	bool state;
+	ulong scheduledOffTime;
+	PinState state;
 	byte pin;
 	float multiplier;
 };
@@ -31,6 +39,15 @@ int pulseLength;
 bool wasHigh;
 bool firstDiscarded;
 
+#define DutyCycleOffset 20
+
+enum DutyCycleType 
+{
+	Half,
+	Full
+};
+DutyCycleType lastDutyCycleType;
+
 #ifdef SERIAL_DEBUG
 bool ready = false;
 #endif
@@ -40,6 +57,8 @@ void setup()
 	lastPulse = millis() - 1;
 	pulseLength = 0;
 	wasHigh = false;
+
+	lastDutyCycleType = Half;
 
 	memset(sequencers, 0, sizeof(SequencerState) * SEQUENCER_COUNT);
 
@@ -137,6 +156,16 @@ void loop()
 
 	ulong currentTime = millis();
 
+	// query duty cycle
+	DutyCycleType cycleType = analogRead(In::Analog::DutyCycle) > 127 ? Full : Half;
+	if (lastDutyCycleType != cycleType)
+	{
+#ifdef SERIAL_DEBUG
+		printf("<< new duty cycle type : %s >>\n", cycleType == Full ? "full" : "half");
+#endif
+		lastDutyCycleType = cycleType;
+	}
+
 	// refresh multiplier
 	SequencerState& variableSequencer = sequencers[0];
 	float rawMultiplier = analogRead(In::Analog::Multiplier) / 1024.0f;
@@ -207,8 +236,8 @@ void loop()
 						headOffset = 0;
 
 #ifdef SERIAL_DEBUG
-					if (i == DEBUGGED_OUTPUT)
-						Serial.println(distFromHead);
+					//if (i == DEBUGGED_OUTPUT)
+					//	Serial.println(distFromHead);
 #endif
 				}
 
@@ -226,13 +255,13 @@ void loop()
 				sequencer.queueLength = QUEUE_SIZE;
 
 #ifdef SERIAL_DEBUG
-				if (!noop && i == DEBUGGED_OUTPUT)
-				{
-					//Serial.print("{ ");
-					//for (byte j = 1; j < QUEUE_SIZE; ++j)
-					//	printf("%lu ", sequencer.queue[j] - sequencer.queue[j - 1]);
-					//Serial.println("}");
-				}
+				//if (!noop && i == DEBUGGED_OUTPUT)
+				//{
+				//	Serial.print("{ ");
+				//	for (byte j = 1; j < QUEUE_SIZE; ++j)
+				//		printf("%lu ", sequencer.queue[j] - sequencer.queue[j - 1]);
+				//	Serial.println("}");
+				//}
 #endif
 			}
 		}
@@ -243,19 +272,48 @@ void loop()
 	for (byte i = 0; i < SEQUENCER_COUNT; ++i)
 	{
 		SequencerState& sequencer = sequencers[i];
-		if (sequencer.queueLength > 0 && currentTime >= sequencer.queue[0])
+		if (sequencer.state == ScheduledOff)
 		{
+			if (currentTime >= sequencer.scheduledOffTime)
+			{
+				sequencer.state = Off;
+				analogWrite(sequencer.pin, 0);
+
+#ifdef SERIAL_DEBUG
+				if (i == DEBUGGED_OUTPUT)
+					printf(". ql=%i\n", sequencer.queueLength);
+#endif
+			}
+		}
+		else if (sequencer.queueLength > 0 && currentTime >= sequencer.queue[0])
+		{
+			// state logic
+			if (sequencer.state == On)
+			{
+				if (cycleType == Full)
+				{
+					sequencer.scheduledOffTime = sequencer.queue[1] - DutyCycleOffset;
+					sequencer.state = ScheduledOff;
+				}
+				else
+				{
+					sequencer.state = Off;
+					analogWrite(sequencer.pin, 0);
+				}
+			}
+			else if (sequencer.state == Off)
+			{
+				sequencer.state = On;
+				analogWrite(sequencer.pin, 255);
+			}
+
 			// move queue back
 			sequencer.queueLength--;
 			memmove(sequencer.queue, &sequencer.queue[1], sizeof(ulong) * sequencer.queueLength);
 
-			// toggle state
-			sequencer.state = !sequencer.state;
-			analogWrite(sequencer.pin, sequencer.state ? 255 : 0);
-
 #ifdef SERIAL_DEBUG
-			//if (i == DEBUGGED_OUTPUT)
-			//	printf("%s ql=%i\n", sequencer.state ? "O " : ".", sequencer.queueLength);
+			if (i == DEBUGGED_OUTPUT)
+				printf("%s ql=%i\n", sequencer.state == On ? "O" : sequencer.state == Off ? "." : "()", sequencer.queueLength);
 #endif
 		}
 	}

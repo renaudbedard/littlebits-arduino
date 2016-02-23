@@ -15,6 +15,7 @@ class In
     {
     public:
 		static const byte Multiplier = 0;
+		static const byte DutyCycle = 1;
     };
 };
 
